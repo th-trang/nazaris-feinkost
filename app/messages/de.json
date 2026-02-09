@@ -1,0 +1,66 @@
+{
+  "nav": {
+    "home": "Home",
+    "aboutUs": "Über Uns",
+    "menu": "Menü",
+    "catering": "Catering",
+    "locations": "Standorte",
+    "language": "Sprache"
+  },
+  "home": {
+    "freshFromMarket": "Frisch vom Wochenmarkt",
+    "weeklyMarket": "Wochenmarkt",
+    "heroDescription": "Wir sind in vielen Wochenmärkten in Hamburg zu finden, unter Standort können Sie alle unsere Stände finden wo deren Sie uns besuchen können.",
+    "toLocations": "Zu den Standorten",
+    "since1992": "Seit 1992",
+    "aboutUs": "Über Uns",
+    "aboutText1": "Wir sind ein Hamburger Familienbetrieb und spezialisieren uns in Hausgemachte Mediterrane Spezialitäten und Vegane-Feinkost seit 1992.",
+    "aboutText2": "In bester norddeutscher Tradition halten wir, was wir versprechen. Wir stehen für hochwertige Produkte zu einem fairen Preis.",
+    "aboutText3": "Bei uns muss alles stimmen: Die Ware, der Service und auch das menschliche Miteinander.",
+    "ourTeam": "Unser Team",
+    "theTeam": "Das Team",
+    "teamText1": "In erster Linie bemühen wir uns, für unsere Kunden ein gutes Kauferlebnis anzubieten. Das können wir nur mit einem gut ausgebildeten und motivierten Team erreichen.",
+    "teamText2": "Deshalb investieren wir in Teamarbeit und in ein gutes Arbeitsklima für unserer Mitarbeiter/innen.",
+    "customerReviews": "Hören Sie, was unsere Kunden zu sagen haben",
+    "testimonial1": "Das Essen war super, hatten eine gemischte Platte. Definitiv empfehlen- und einen zweiten Besuch wert.",
+    "testimonial2": "Hier stimmt einfach alles, sehr leckeres Essen, tolles Ambiente, super Preisleistung und ein sehr aufmerksamer netter Service",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz"
+  },
+  "locations": {
+    "title": "Standorte",
+    "description": "Besuchen Sie uns an einem unserer vielen Standorte in Hamburg und Umgebung. Wir freuen uns auf Ihren Besuch!",
+    "selectLocation": "Wählen Sie einen Standort:",
+    "openingHours": "Öffnungszeiten"
+  },
+  "catering": {
+    "contactUs": "Kontaktieren Sie uns",
+    "title": "Catering Service",
+    "description": "Planen Sie eine Veranstaltung? Lassen Sie uns Ihre Gäste mit unseren hausgemachten mediterranen Spezialitäten verwöhnen.",
+    "sendRequest": "Anfrage senden",
+    "thankYou": "Vielen Dank!",
+    "messageSent": "Ihre Nachricht wurde erfolgreich gesendet. Wir werden uns bald bei Ihnen melden.",
+    "name": "Name",
+    "yourName": "Ihr Name",
+    "email": "E-Mail",
+    "emailPlaceholder": "ihre@email.de",
+    "phone": "Telefon",
+    "eventDate": "Veranstaltungsdatum",
+    "guestCount": "Anzahl der Gäste",
+    "pleaseSelect": "Bitte wählen",
+    "persons": "Personen",
+    "yourMessage": "Ihre Nachricht",
+    "messagePlaceholder": "Erzählen Sie uns mehr über Ihre Veranstaltung...",
+    "submit": "Anfrage senden",
+    "ourService": "Unser Catering Service",
+    "serviceDescription": "Wir bieten professionellen Catering-Service für alle Arten von Veranstaltungen:",
+    "corporateEvents": "Firmenveranstaltungen & Meetings",
+    "privateCelebrations": "Private Feiern & Geburtstage",
+    "weddings": "Hochzeiten & besondere Anlässe",
+    "buffets": "Buffets & Fingerfood",
+    "directContact": "Direkter Kontakt"
+  },
+  "menu": {
+    "title": "Menü"
+  }
+}
