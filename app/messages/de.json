@@ -61,6 +61,94 @@
     "directContact": "Direkter Kontakt"
   },
   "menu": {
-    "title": "Menü"
+    "title": "Menü",
+    "onlineOrder": "Online Bestellen",
+    "ourMenu": "Unser Menü",
+    "description": "Entdecken Sie unsere hausgemachten mediterranen Spezialitäten und veganen Feinkost-Produkte",
+    "all": "Alle",
+    "vegan": "Vegan",
+    "add": "Hinzufügen",
+    "noProducts": "Keine Produkte in dieser Kategorie gefunden",
+    "categories": {
+      "dips": "Dips & Aufstriche",
+      "mainCourses": "Hauptgerichte",
+      "salads": "Salate",
+      "appetizers": "Vorspeisen",
+      "desserts": "Desserts"
+    },
+    "products": {
+      "hummusClassic": {
+        "name": "Hummus Klassik",
+        "description": "Cremige Kichererbsenpaste mit Tahini, Knoblauch und Zitrone"
+      },
+      "falafelPlate": {
+        "name": "Falafel Teller",
+        "description": "6 knusprige Falafel-Bällchen mit Salat und Tahini-Sauce"
+      },
+      "greekSalad": {
+        "name": "Griechischer Salat",
+        "description": "Frischer Salat mit Tomaten, Gurken, Oliven und Feta"
+      },
+      "dolma": {
+        "name": "Dolma",
+        "description": "Gefüllte Weinblätter mit Reis, Kräutern und Gewürzen"
+      },
+      "tabouleh": {
+        "name": "Tabouleh",
+        "description": "Frischer Petersiliensalat mit Bulgur, Tomaten und Zitrone"
+      },
+      "baklava": {
+        "name": "Baklava",
+        "description": "Süßes Gebäck mit Nüssen und Honig"
+      },
+      "tzatziki": {
+        "name": "Tzatziki",
+        "description": "Griechischer Joghurt-Dip mit Gurken und Knoblauch"
+      },
+      "marinatedOlives": {
+        "name": "Marinierte Oliven",
+        "description": "Auswahl an marinierten Oliven mit Kräutern"
+      }
+    }
+  },
+  "checkout": {
+    "title": "Kasse",
+    "completeOrder": "Vervollständigen Sie Ihre Bestellung",
+    "contactInfo": "Kontaktinformationen",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "email": "E-Mail",
+    "phone": "Telefon",
+    "deliveryAddress": "Lieferadresse",
+    "streetAddress": "Straße und Hausnummer",
+    "postalCode": "Postleitzahl",
+    "city": "Stadt",
+    "deliveryNotes": "Lieferhinweise (Optional)",
+    "deliveryNotesPlaceholder": "z.B. Klingel, Stockwerk, etc.",
+    "paymentMethod": "Zahlungsmethode",
+    "creditCard": "Kreditkarte / Debitkarte",
+    "paypal": "PayPal",
+    "cashOnDelivery": "Barzahlung bei Lieferung",
+    "orderSummary": "Bestellübersicht",
+    "quantity": "Menge",
+    "subtotal": "Zwischensumme",
+    "delivery": "Lieferung",
+    "total": "Gesamt",
+    "placeOrder": "Bestellung aufgeben",
+    "termsNotice": "Mit der Bestellung akzeptieren Sie unsere AGB und Datenschutzerklärung",
+    "orderSuccess": "Bestellung erfolgreich!",
+    "thankYou": "Vielen Dank für Ihre Bestellung bei Nazari.",
+    "confirmationEmail": "Sie erhalten in Kürze eine Bestätigungs-E-Mail.",
+    "orderNumber": "Bestellnummer"
+  },
+  "cart": {
+    "title": "Warenkorb",
+    "empty": "Ihr Warenkorb ist leer",
+    "emptyMessage": "Fügen Sie Produkte hinzu, um zu beginnen",
+    "toMenu": "Zum Menü",
+    "subtotal": "Zwischensumme",
+    "total": "Gesamt",
+    "checkout": "Zur Kasse",
+    "continueShopping": "Weiter einkaufen"
   }
 }

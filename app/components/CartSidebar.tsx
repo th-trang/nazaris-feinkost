@@ -2,9 +2,11 @@
 
 import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 
 export function CartSidebar() {
+  const t = useTranslations('cart');
   const {
     cartItems,
     isCartOpen,
@@ -37,7 +39,7 @@ export function CartSidebar() {
             <div className="flex items-center space-x-3">
               <ShoppingBag className="w-6 h-6 text-green-600" />
               <h2 className="text-2xl text-gray-900">
-                Warenkorb
+                {t('title')}
                 {cartCount > 0 && (
                   <span className="ml-2 text-lg text-gray-600">({cartCount})</span>
                 )}
@@ -58,16 +60,16 @@ export function CartSidebar() {
                 <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4">
                   <ShoppingBag className="w-12 h-12 text-gray-400" />
                 </div>
-                <h3 className="text-xl text-gray-900 mb-2">Ihr Warenkorb ist leer</h3>
+                <h3 className="text-xl text-gray-900 mb-2">{t('empty')}</h3>
                 <p className="text-gray-600 mb-6">
-                  Fügen Sie Produkte hinzu, um zu beginnen
+                  {t('emptyMessage')}
                 </p>
                 <Link
                   href="/menu"
                   onClick={() => setIsCartOpen(false)}
                   className="px-6 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition-all shadow-lg"
                 >
-                  Zum Menü
+                  {t('toMenu')}
                 </Link>
               </div>
             ) : (
@@ -126,7 +128,7 @@ export function CartSidebar() {
 
                     {/* Item Total */}
                     <div className="mt-3 pt-3 border-t border-gray-200 flex justify-between items-center">
-                      <span className="text-sm text-gray-600">Zwischensumme:</span>
+                      <span className="text-sm text-gray-600">{t('subtotal')}:</span>
                       <span className="text-gray-900">
                         €{(item.price * item.quantity).toFixed(2)}
                       </span>
@@ -142,7 +144,7 @@ export function CartSidebar() {
             <div className="border-t border-gray-200 p-6 bg-white/60 backdrop-blur-sm">
               {/* Total */}
               <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
-                <span className="text-lg text-gray-900">Gesamt:</span>
+                <span className="text-lg text-gray-900">{t('total')}:</span>
                 <span className="text-2xl text-gray-900">
                   €{cartTotal.toFixed(2)}
                 </span>
@@ -154,7 +156,7 @@ export function CartSidebar() {
                 onClick={() => setIsCartOpen(false)}
                 className="block w-full py-4 bg-green-600 text-white text-center rounded-xl hover:bg-green-700 transition-all shadow-lg hover:shadow-xl"
               >
-                Zur Kasse
+                {t('checkout')}
               </Link>
 
               {/* Continue Shopping */}
@@ -162,7 +164,7 @@ export function CartSidebar() {
                 onClick={() => setIsCartOpen(false)}
                 className="w-full mt-3 py-3 text-gray-700 text-center hover:text-gray-900 transition-colors"
               >
-                Weiter einkaufen
+                {t('continueShopping')}
               </button>
             </div>
           )}

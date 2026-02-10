@@ -178,7 +178,6 @@ export default function Header() {
                                             }`}
                                     >
                                         <span className="flex items-center space-x-2">
-                                            <span className="text-xl">🇩🇪</span>
                                             <span>Deutsch</span>
                                         </span>
                                     </button>
@@ -192,7 +191,6 @@ export default function Header() {
                                             }`}
                                     >
                                         <span className="flex items-center space-x-2">
-                                            <span className="text-xl">🇬🇧</span>
                                             <span>English</span>
                                         </span>
                                     </button>

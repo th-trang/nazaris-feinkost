@@ -9,6 +9,7 @@ const publicPages = [
     "/catering",
     "/menu",
     "/standorte",
+    "/checkout",
 ];
 
 const intlMiddleware = createIntlMiddleware({
