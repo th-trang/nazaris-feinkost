@@ -69,51 +69,58 @@
     "vegan": "Vegan",
     "add": "Add",
     "noProducts": "No products found in this category",
+    "ingredients": "Ingredients",
+    "pricePerKg": "Price per kg",
+    "weightInGrams": "Weight in grams",
+    "weightPlaceholder": "e.g. 250",
+    "price": "Price",
+    "addToCart": "Add to Cart",
+    "invalidAmount": "Please enter a valid amount in grams",
     "categories": {
-      "dips": "Dips & Spreads",
+      "dipsAndSpreads": "Dips & Spreads",
       "mainCourses": "Main Courses",
       "salads": "Salads",
       "appetizers": "Appetizers",
       "desserts": "Desserts"
     },
     "products": {
-      "hummusClassic": {
+      "1": {
         "name": "Classic Hummus",
-        "description": "Creamy chickpea paste with tahini, garlic and lemon"
+        "ingredients": ["Chickpeas", "Tahini", "Garlic", "Lemon Juice", "Olive Oil", "Cumin", "Salt"]
       },
-      "falafelPlate": {
-        "name": "Falafel Plate",
-        "description": "6 crispy falafel balls with salad and tahini sauce"
+      "2": {
+        "name": "Falafel",
+        "ingredients": ["Chickpeas", "Onions", "Parsley", "Coriander", "Garlic", "Cumin", "Salt", "Pepper"]
       },
-      "greekSalad": {
+      "3": {
         "name": "Greek Salad",
-        "description": "Fresh salad with tomatoes, cucumbers, olives and feta"
+        "ingredients": ["Tomatoes", "Cucumbers", "Bell Pepper", "Onions", "Olives", "Feta Cheese", "Olive Oil", "Oregano"]
       },
-      "dolma": {
+      "4": {
         "name": "Dolma",
-        "description": "Stuffed grape leaves with rice, herbs and spices"
+        "ingredients": ["Grape Leaves", "Rice", "Onions", "Tomatoes", "Parsley", "Mint", "Olive Oil", "Lemon Juice"]
       },
-      "tabouleh": {
+      "5": {
         "name": "Tabouleh",
-        "description": "Fresh parsley salad with bulgur, tomatoes and lemon"
+        "ingredients": ["Parsley", "Bulgur", "Tomatoes", "Onions", "Mint", "Lemon Juice", "Olive Oil", "Salt"]
       },
-      "baklava": {
+      "6": {
         "name": "Baklava",
-        "description": "Sweet pastry with nuts and honey"
+        "ingredients": ["Filo Dough", "Walnuts", "Pistachios", "Butter", "Honey", "Sugar", "Cinnamon"]
       },
-      "tzatziki": {
+      "7": {
         "name": "Tzatziki",
-        "description": "Greek yogurt dip with cucumber and garlic"
+        "ingredients": ["Greek Yogurt", "Cucumbers", "Garlic", "Olive Oil", "Dill", "Lemon Juice", "Salt"]
       },
-      "marinatedOlives": {
+      "8": {
         "name": "Marinated Olives",
-        "description": "Selection of marinated olives with herbs"
+        "ingredients": ["Olives", "Olive Oil", "Garlic", "Rosemary", "Thyme", "Lemon Zest", "Chili"]
       }
     }
   },
   "checkout": {
-    "title": "Checkout",
-    "completeOrder": "Complete your order",
+    "title": "Place order",
+    "completeOrder": "Select a pickup date and location for your order.",
     "contactInfo": "Contact Information",
     "firstName": "First Name",
     "lastName": "Last Name",
@@ -131,15 +138,16 @@
     "cashOnDelivery": "Cash on Delivery",
     "orderSummary": "Order Summary",
     "quantity": "Quantity",
-    "subtotal": "Subtotal",
-    "delivery": "Delivery",
     "total": "Total",
     "placeOrder": "Place Order",
     "termsNotice": "By placing your order, you accept our Terms and Privacy Policy",
     "orderSuccess": "Order Successful!",
     "thankYou": "Thank you for your order at Nazari.",
     "confirmationEmail": "You will receive a confirmation email shortly.",
-    "orderNumber": "Order Number"
+    "orderNumber": "Order Number",
+    "invalidEmail": "Please enter a valid email address",
+    "invalidPhone": "Please enter a valid phone number (digits only)",
+    "invalidName": "Name cannot contain special characters (§$%&/?*+°^><)"
   },
   "cart": {
     "title": "Cart",

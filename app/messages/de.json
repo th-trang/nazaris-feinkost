@@ -69,51 +69,58 @@
     "vegan": "Vegan",
     "add": "Hinzufügen",
     "noProducts": "Keine Produkte in dieser Kategorie gefunden",
+    "ingredients": "Zutaten",
+    "pricePerKg": "Preis pro kg",
+    "weightInGrams": "Gewicht in Gramm",
+    "weightPlaceholder": "z.B. 250",
+    "price": "Preis",
+    "addToCart": "In den Warenkorb",
+    "invalidAmount": "Bitte geben Sie eine gültige Menge in Gramm ein",
     "categories": {
-      "dips": "Dips & Aufstriche",
+      "dipsAndSpreads": "Dips & Aufstriche",
       "mainCourses": "Hauptgerichte",
       "salads": "Salate",
       "appetizers": "Vorspeisen",
       "desserts": "Desserts"
     },
     "products": {
-      "hummusClassic": {
+      "1": {
         "name": "Hummus Klassik",
-        "description": "Cremige Kichererbsenpaste mit Tahini, Knoblauch und Zitrone"
+        "ingredients": ["Kichererbsen", "Tahini", "Knoblauch", "Zitronensaft", "Olivenöl", "Kreuzkümmel", "Salz"]
       },
-      "falafelPlate": {
-        "name": "Falafel Teller",
-        "description": "6 knusprige Falafel-Bällchen mit Salat und Tahini-Sauce"
+      "2": {
+        "name": "Falafel",
+        "ingredients": ["Kichererbsen", "Zwiebeln", "Petersilie", "Koriander", "Knoblauch", "Kreuzkümmel", "Salz", "Pfeffer"]
       },
-      "greekSalad": {
+      "3": {
         "name": "Griechischer Salat",
-        "description": "Frischer Salat mit Tomaten, Gurken, Oliven und Feta"
+        "ingredients": ["Tomaten", "Gurken", "Paprika", "Zwiebeln", "Oliven", "Feta-Käse", "Olivenöl", "Oregano"]
       },
-      "dolma": {
+      "4": {
         "name": "Dolma",
-        "description": "Gefüllte Weinblätter mit Reis, Kräutern und Gewürzen"
+        "ingredients": ["Weinblätter", "Reis", "Zwiebeln", "Tomaten", "Petersilie", "Minze", "Olivenöl", "Zitronensaft"]
       },
-      "tabouleh": {
+      "5": {
         "name": "Tabouleh",
-        "description": "Frischer Petersiliensalat mit Bulgur, Tomaten und Zitrone"
+        "ingredients": ["Petersilie", "Bulgur", "Tomaten", "Zwiebeln", "Minze", "Zitronensaft", "Olivenöl", "Salz"]
       },
-      "baklava": {
+      "6": {
         "name": "Baklava",
-        "description": "Süßes Gebäck mit Nüssen und Honig"
+        "ingredients": ["Filoteig", "Walnüsse", "Pistazien", "Butter", "Honig", "Zucker", "Zimt"]
       },
-      "tzatziki": {
+      "7": {
         "name": "Tzatziki",
-        "description": "Griechischer Joghurt-Dip mit Gurken und Knoblauch"
+        "ingredients": ["Griechischer Joghurt", "Gurken", "Knoblauch", "Olivenöl", "Dill", "Zitronensaft", "Salz"]
       },
-      "marinatedOlives": {
+      "8": {
         "name": "Marinierte Oliven",
-        "description": "Auswahl an marinierten Oliven mit Kräutern"
+        "ingredients": ["Oliven", "Olivenöl", "Knoblauch", "Rosmarin", "Thymian", "Zitronenschale", "Chili"]
       }
     }
   },
   "checkout": {
-    "title": "Kasse",
-    "completeOrder": "Vervollständigen Sie Ihre Bestellung",
+    "title": "Bestellung abschließen",
+    "completeOrder": "Wählen Sie einen Abholtermin und -ort für Ihre Bestellung",
     "contactInfo": "Kontaktinformationen",
     "firstName": "Vorname",
     "lastName": "Nachname",
@@ -131,15 +138,16 @@
     "cashOnDelivery": "Barzahlung bei Lieferung",
     "orderSummary": "Bestellübersicht",
     "quantity": "Menge",
-    "subtotal": "Zwischensumme",
-    "delivery": "Lieferung",
     "total": "Gesamt",
-    "placeOrder": "Bestellung aufgeben",
+    "placeOrder": "Bestellung abschließen",
     "termsNotice": "Mit der Bestellung akzeptieren Sie unsere AGB und Datenschutzerklärung",
     "orderSuccess": "Bestellung erfolgreich!",
     "thankYou": "Vielen Dank für Ihre Bestellung bei Nazari.",
     "confirmationEmail": "Sie erhalten in Kürze eine Bestätigungs-E-Mail.",
-    "orderNumber": "Bestellnummer"
+    "orderNumber": "Bestellnummer",
+    "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
+    "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein (nur Ziffern)",
+    "invalidName": "Name darf keine Sonderzeichen enthalten (§$%&/?*+°^><)"
   },
   "cart": {
     "title": "Warenkorb",

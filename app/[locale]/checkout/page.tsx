@@ -1,59 +1,25 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { useCart } from "@/app/context/CartContext";
-import { useTranslations } from "next-intl";
-import { CreditCard, MapPin, User, Mail, Phone, CheckCircle } from "lucide-react";
+import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock, Calendar } from "lucide-react";
+import { useCheckout } from "./useCheckout";
+import { getHoursForDay } from "@/app/data/LocationList";
 
 export default function CheckoutPage() {
-  const t = useTranslations('checkout');
-  const router = useRouter();
-  const { cartItems, cartTotal, clearCart } = useCart();
-  const [isSubmitted, setIsSubmitted] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    address: "",
-    city: "",
-    postalCode: "",
-    deliveryNotes: "",
-    paymentMethod: "card",
-  });
-
-  const deliveryFee = 3.5;
-  const total = cartTotal + deliveryFee;
-
-  // Redirect if cart is empty and not submitted
-  useEffect(() => {
-    if (cartItems.length === 0 && !isSubmitted) {
-      router.push("/menu");
-    }
-  }, [cartItems.length, isSubmitted, router]);
-
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitted(true);
-    
-    // Simulate order processing
-    setTimeout(() => {
-      clearCart();
-      setTimeout(() => {
-        router.push("/");
-      }, 2000);
-    }, 1500);
-  };
+  const {
+    t,
+    formData,
+    errors,
+    isSubmitted,
+    cartItems,
+    cartTotal,
+    availableLocations,
+    selectedDayName,
+    selectedLocation,
+    setAvailableLocations,
+    tomorrowStr,
+    handleChange,
+    handleSubmit,
+  } = useCheckout();
 
   // Show nothing while redirecting
   if (cartItems.length === 0 && !isSubmitted) {
@@ -62,22 +28,41 @@ export default function CheckoutPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center py-20 px-4 pt-[50px]">
+      <div className="min-h-screen flex items-center justify-center py-20 px-4">
         <div className="max-w-md w-full text-center">
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-gray-100">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-14 h-14 text-green-600" />
             </div>
-            <h2 className="text-3xl text-gray-900 mb-4">{t('orderSuccess')}</h2>
+            <h2 className="text-3xl text-gray-900 mb-4">
+              Bestellung erfolgreich!
+            </h2>
             <p className="text-gray-700 mb-2">
-              {t('thankYou')}
+              Vielen Dank für Ihre Bestellung bei Nazari.
             </p>
-            <p className="text-gray-600 text-sm">
-              {t('confirmationEmail')}
+            <p className="text-gray-600 text-sm mb-4">
+              Sie erhalten in Kürze eine Bestätigungs-E-Mail.
             </p>
             <div className="mt-8 p-4 bg-green-50 rounded-xl border border-green-200">
+              <p className="text-sm text-green-800 mb-2">
+                Bestellnummer:{" "}
+                <span className="font-mono">
+                  #{Math.floor(Math.random() * 10000)}
+                </span>
+              </p>
               <p className="text-sm text-green-800">
-                {t('orderNumber')}: <span className="font-mono">#{Math.floor(Math.random() * 10000)}</span>
+                Abholung: {formData.pickupLocation}
+              </p>
+              <p className="text-xs text-green-700 mt-1">
+                am{" "}
+                {new Date(
+                  formData.pickupDate,
+                ).toLocaleDateString("de-DE", {
+                  weekday: "long",
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
               </p>
             </div>
           </div>
@@ -88,7 +73,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-6xl mx-auto pt-[50px]">
         {/* Header */}
         <div className="mb-12">
           <h1 className="text-4xl lg:text-5xl tracking-tight text-gray-900 mb-4">
@@ -124,8 +109,11 @@ export default function CheckoutPage() {
                       value={formData.firstName}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`}
                     />
+                    {errors.firstName && (
+                      <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
+                    )}
                   </div>
 
                   <div>
@@ -139,8 +127,11 @@ export default function CheckoutPage() {
                       value={formData.lastName}
                       onChange={handleChange}
                       required
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      className={`w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`}
                     />
+                    {errors.lastName && (
+                      <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
+                    )}
                   </div>
 
                   <div>
@@ -158,9 +149,12 @@ export default function CheckoutPage() {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
                       />
                     </div>
+                    {errors.email && (
+                      <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                    )}
                   </div>
 
                   <div>
@@ -178,82 +172,135 @@ export default function CheckoutPage() {
                         value={formData.phone}
                         onChange={handleChange}
                         required
-                        className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                        placeholder="+49 123 456789"
+                        className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.phone ? 'border-red-500' : 'border-gray-200'}`}
                       />
                     </div>
+                    {errors.phone && (
+                      <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
+                    )}
                   </div>
                 </div>
               </div>
 
-              {/* Delivery Address */}
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100">
                 <div className="flex items-center space-x-3 mb-6">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
                     <MapPin className="w-5 h-5 text-green-600" />
                   </div>
-                  <h2 className="text-2xl text-gray-900">{t('deliveryAddress')}</h2>
+                  <h2 className="text-2xl text-gray-900">
+                    Abholung
+                  </h2>
                 </div>
 
                 <div className="space-y-4">
+                  {/* Date Picker */}
                   <div>
-                    <label htmlFor="address" className="block text-sm text-gray-700 mb-2">
-                      {t('streetAddress')} *
+                    <label
+                      htmlFor="pickupDate"
+                      className="block text-sm text-gray-700 mb-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="w-4 h-4" />
+                        <span>Abholdatum *</span>
+                      </div>
                     </label>
                     <input
-                      type="text"
-                      id="address"
-                      name="address"
-                      value={formData.address}
+                      type="date"
+                      id="pickupDate"
+                      name="pickupDate"
+                      value={formData.pickupDate}
                       onChange={handleChange}
+                      min={tomorrowStr}
                       required
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                      Ausgewählter Tag: {selectedDayName}
+                    </p>
                   </div>
 
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="postalCode" className="block text-sm text-gray-700 mb-2">
-                        {t('postalCode')} *
-                      </label>
-                      <input
-                        type="text"
-                        id="postalCode"
-                        name="postalCode"
-                        value={formData.postalCode}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-
-                    <div>
-                      <label htmlFor="city" className="block text-sm text-gray-700 mb-2">
-                        {t('city')} *
-                      </label>
-                      <input
-                        type="text"
-                        id="city"
-                        name="city"
-                        value={formData.city}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                      />
-                    </div>
-                  </div>
-
+                  {/* Location Selection */}
                   <div>
-                    <label htmlFor="deliveryNotes" className="block text-sm text-gray-700 mb-2">
-                      {t('deliveryNotes')}
+                    <label
+                      htmlFor="pickupLocation"
+                      className="block text-sm text-gray-700 mb-2"
+                    >
+                      Abholort *
+                    </label>
+
+                    {availableLocations.length === 0 ? (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
+                        <p className="text-sm text-red-800">
+                          An diesem Tag sind keine Standorte
+                          geöffnet. Bitte wählen Sie ein anderes
+                          Datum.
+                        </p>
+                      </div>
+                    ) : (
+                      <select
+                        id="pickupLocation"
+                        name="pickupLocation"
+                        value={formData.pickupLocation}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      >
+                        <option value="">
+                          -- Bitte wählen --
+                        </option>
+                        {availableLocations.map(
+                          (location, index) => (
+                            <option
+                              key={index}
+                              value={location.name}
+                            >
+                              {location.name} -{" "}
+                              {location.address}
+                            </option>
+                          ),
+                        )}
+                      </select>
+                    )}
+
+                    {/* Show opening hours for selected location */}
+                    {selectedLocation && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-start space-x-2">
+                          <Clock className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          <div className="text-sm">
+                            <p className="font-medium text-green-900">
+                              Öffnungszeiten am{" "}
+                              {selectedDayName}:
+                            </p>
+                            <p className="text-green-700">
+                              {getHoursForDay(
+                                selectedLocation,
+                                selectedDayName,
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Special Requests */}
+                  <div>
+                    <label
+                      htmlFor="specialRequests"
+                      className="block text-sm text-gray-700 mb-2"
+                    >
+                      Besondere Wünsche (Optional)
                     </label>
                     <textarea
-                      id="deliveryNotes"
-                      name="deliveryNotes"
-                      value={formData.deliveryNotes}
+                      id="specialRequests"
+                      name="specialRequests"
+                      value={formData.specialRequests}
                       onChange={handleChange}
                       rows={3}
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
-                      placeholder={t('deliveryNotesPlaceholder')}
+                      placeholder="z.B. Spezielle Verpackung, Abholzeit, etc."
                     />
                   </div>
                 </div>
@@ -293,17 +340,6 @@ export default function CheckoutPage() {
                     <span className="ml-3 text-gray-900">PayPal</span>
                   </label>
 
-                  <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-green-500 transition-colors">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="cash"
-                      checked={formData.paymentMethod === "cash"}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-green-600"
-                    />
-                    <span className="ml-3 text-gray-900">{t('cashOnDelivery')}</span>
-                  </label>
                 </div>
               </div>
             </div>
@@ -316,7 +352,7 @@ export default function CheckoutPage() {
                 {/* Cart Items */}
                 <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
                   {cartItems.map((item) => (
-                    <div key={item.id} className="flex gap-3 py-3 border-b border-gray-200">
+                    <div key={item.id} className="flex gap-3 py-3">
                       <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         <img
                           src={item.image}
@@ -338,16 +374,8 @@ export default function CheckoutPage() {
                 {/* Pricing */}
                 <div className="space-y-3 pt-4 border-t border-gray-200">
                   <div className="flex justify-between text-gray-700">
-                    <span>{t('subtotal')}</span>
-                    <span>€{cartTotal.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-700">
-                    <span>{t('delivery')}</span>
-                    <span>€{deliveryFee.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-xl text-gray-900 pt-3 border-t border-gray-200">
                     <span>{t('total')}</span>
-                    <span>€{total.toFixed(2)}</span>
+                    <span>€{cartTotal.toFixed(2)}</span>
                   </div>
                 </div>
 

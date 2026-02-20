@@ -76,7 +76,7 @@ export function CartSidebar() {
               <div className="space-y-4">
                 {cartItems.map((item) => (
                   <div
-                    key={item.id}
+                    key={item.cartItemId || item.id}
                     className="bg-white/80 rounded-xl p-4 shadow-md border border-gray-100"
                   >
                     <div className="flex gap-4">
@@ -100,7 +100,7 @@ export function CartSidebar() {
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity - 1)}
                               className="p-1 hover:bg-gray-200 rounded transition-colors"
                             >
                               <Minus className="w-4 h-4 text-gray-700" />
@@ -109,7 +109,7 @@ export function CartSidebar() {
                               {item.quantity}
                             </span>
                             <button
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity + 1)}
                               className="p-1 hover:bg-gray-200 rounded transition-colors"
                             >
                               <Plus className="w-4 h-4 text-gray-700" />
@@ -117,7 +117,7 @@ export function CartSidebar() {
                           </div>
 
                           <button
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => removeFromCart(item.cartItemId || item.id)}
                             className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4 text-red-600" />
