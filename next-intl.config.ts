@@ -1,6 +1,6 @@
 export default {
   locales: ["en", "de"],
-  defaultLocale: "en",
+  defaultLocale: "de",
   localePrefix: "always",
 };
 
