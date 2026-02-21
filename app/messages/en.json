@@ -147,7 +147,18 @@
     "orderNumber": "Order Number",
     "invalidEmail": "Please enter a valid email address",
     "invalidPhone": "Please enter a valid phone number (digits only)",
-    "invalidName": "Name cannot contain special characters (§$%&/?*+°^><)"
+    "invalidName": "Name cannot contain special characters (§$%&/?*+°^><)",
+    "pickup": "Pickup",
+    "pickupDate": "Pickup Date",
+    "selectedDay": "Selected day",
+    "pickupLocation": "Pickup Location",
+    "noLocationsAvailable": "No locations are open on this day. Please select a different date.",
+    "pleaseSelect": "-- Please select --",
+    "openingHoursOn": "Opening hours on",
+    "address": "Address",
+    "specialRequests": "Special Requests (Optional)",
+    "specialRequestsPlaceholder": "e.g. Special packaging, pickup time, etc.",
+    "pickupOn": "on"
   },
   "cart": {
     "title": "Cart",

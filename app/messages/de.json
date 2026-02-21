@@ -10,7 +10,7 @@
   "home": {
     "freshFromMarket": "Frisch vom Wochenmarkt",
     "weeklyMarket": "Wochenmarkt",
-    "heroDescription": "Wir sind in vielen Wochenmärkten in Hamburg zu finden, unter Standort können Sie alle unsere Stände finden wo deren Sie uns besuchen können.",
+    "heroDescription": "Wir sind auf vielen Wochenmärkten in Hamburg zu finden, unter Standort können Sie alle unsere Stände finden auf deren Sie uns besuchen können.",
     "toLocations": "Zu den Standorten",
     "since1992": "Seit 1992",
     "aboutUs": "Über Uns",
@@ -147,7 +147,18 @@
     "orderNumber": "Bestellnummer",
     "invalidEmail": "Bitte geben Sie eine gültige E-Mail-Adresse ein",
     "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein (nur Ziffern)",
-    "invalidName": "Name darf keine Sonderzeichen enthalten (§$%&/?*+°^><)"
+    "invalidName": "Name darf keine Sonderzeichen enthalten (§$%&/?*+°^><)",
+    "pickup": "Abholung",
+    "pickupDate": "Abholdatum",
+    "selectedDay": "Ausgewählter Tag",
+    "pickupLocation": "Abholort",
+    "noLocationsAvailable": "An diesem Tag sind keine Standorte geöffnet. Bitte wählen Sie ein anderes Datum.",
+    "pleaseSelect": "-- Bitte wählen --",
+    "openingHoursOn": "Öffnungszeiten am",
+    "address": "Adresse",
+    "specialRequests": "Besondere Wünsche (Optional)",
+    "specialRequestsPlaceholder": "z.B. Spezielle Verpackung, Abholzeit, etc.",
+    "pickupOn": "am"
   },
   "cart": {
     "title": "Warenkorb",

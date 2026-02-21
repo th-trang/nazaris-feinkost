@@ -1,15 +1,22 @@
 "use client";
 
-import { Clock, ChevronDown } from "lucide-react";
+import { Clock, MapPin } from "lucide-react";
 import { useState } from "react";
 import { useTranslations } from 'next-intl';
 import { locations } from "@/app/data/LocationList";
+import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
+
+// Convert locations to dropdown options
+const locationOptions: DropdownOption[] = locations.map((location) => ({
+  value: location.name,
+  label: location.name,
+}));
 
 export default function StandortePage() {
-  const [selectedLocation, setSelectedLocation] = useState(0);
+  const [selectedLocationName, setSelectedLocationName] = useState(locations[0].name);
   const t = useTranslations('locations');
 
-  const selected = locations[selectedLocation];
+  const selected = locations.find((loc) => loc.name === selectedLocationName) || locations[0];
   const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(
     `${selected.address} ${selected.city}`
   )}&output=embed`;
@@ -31,24 +38,17 @@ export default function StandortePage() {
 
           {/* Location Dropdown */}
           <div className="max-w-2xl mx-auto mb-12">
-            <label htmlFor="location-select" className="block text-lg text-gray-700 mb-3">
+            <label className="block text-lg text-gray-700 mb-3">
               {t('selectLocation')}
             </label>
-            <div className="relative">
-              <select
-                id="location-select"
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(Number(e.target.value))}
-                className="w-full px-6 py-4 bg-white border-2 border-gray-200 rounded-xl text-lg text-gray-900 appearance-none cursor-pointer hover:border-green-500 focus:border-green-600 focus:outline-none focus:ring-4 focus:ring-green-100 transition-all shadow-sm"
-              >
-                {locations.map((location, index) => (
-                  <option key={index} value={index}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 text-gray-500 pointer-events-none" />
-            </div>
+            <DropdownList
+              value={selectedLocationName}
+              onChange={setSelectedLocationName}
+              options={locationOptions}
+              placeholder={t('selectLocation')}
+              icon={MapPin}
+              headerTitle={t('selectLocation')}
+            />
           </div>
 
           {/* Map & Location Details */}

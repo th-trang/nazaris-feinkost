@@ -149,6 +149,25 @@ export function useCheckout() {
     }
   };
 
+  const setPickupDate = (dateStr: string) => {
+    setFormData((prev) => ({ ...prev, pickupDate: dateStr }));
+    const selectedDate = new Date(dateStr);
+    const locations = getLocationsForDate(selectedDate);
+    setAvailableLocations(locations);
+
+    // Reset location selection if current selection is not available on new date
+    if (
+      formData.pickupLocation &&
+      !locations.find((l) => l.name === formData.pickupLocation)
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        pickupDate: dateStr,
+        pickupLocation: "",
+      }));
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -200,8 +219,10 @@ export function useCheckout() {
     selectedDayName,
     selectedLocation,
     tomorrowStr,
+    tomorrow,
     setAvailableLocations,
     handleChange,
     handleSubmit,
+    setPickupDate,
   };
 }

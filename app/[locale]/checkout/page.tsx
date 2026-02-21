@@ -1,8 +1,10 @@
 "use client";
 
-import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock, Calendar } from "lucide-react";
+import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock } from "lucide-react";
 import { useCheckout } from "./useCheckout";
 import { getHoursForDay } from "@/app/data/LocationList";
+import DatePicker from "@/app/components/DatePicker";
+import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
 
 export default function CheckoutPage() {
   const {
@@ -17,8 +19,10 @@ export default function CheckoutPage() {
     selectedLocation,
     setAvailableLocations,
     tomorrowStr,
+    tomorrow,
     handleChange,
     handleSubmit,
+    setPickupDate,
   } = useCheckout();
 
   // Show nothing while redirecting
@@ -35,26 +39,26 @@ export default function CheckoutPage() {
               <CheckCircle className="w-14 h-14 text-green-600" />
             </div>
             <h2 className="text-3xl text-gray-900 mb-4">
-              Bestellung erfolgreich!
+              {t('orderSuccess')}
             </h2>
             <p className="text-gray-700 mb-2">
-              Vielen Dank für Ihre Bestellung bei Nazari.
+              {t('thankYou')}
             </p>
             <p className="text-gray-600 text-sm mb-4">
-              Sie erhalten in Kürze eine Bestätigungs-E-Mail.
+              {t('confirmationEmail')}
             </p>
             <div className="mt-8 p-4 bg-green-50 rounded-xl border border-green-200">
               <p className="text-sm text-green-800 mb-2">
-                Bestellnummer:{" "}
+                {t('orderNumber')}:{" "}
                 <span className="font-mono">
                   #{Math.floor(Math.random() * 10000)}
                 </span>
               </p>
               <p className="text-sm text-green-800">
-                Abholung: {formData.pickupLocation}
+                {t('pickup')}: {formData.pickupLocation}
               </p>
               <p className="text-xs text-green-700 mt-1">
-                am{" "}
+                {t('pickupOn')}{" "}
                 {new Date(
                   formData.pickupDate,
                 ).toLocaleDateString("de-DE", {
@@ -189,34 +193,23 @@ export default function CheckoutPage() {
                     <MapPin className="w-5 h-5 text-green-600" />
                   </div>
                   <h2 className="text-2xl text-gray-900">
-                    Abholung
+                    {t('pickup')}
                   </h2>
                 </div>
 
                 <div className="space-y-4">
                   {/* Date Picker */}
                   <div>
-                    <label
-                      htmlFor="pickupDate"
-                      className="block text-sm text-gray-700 mb-2"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <Calendar className="w-4 h-4" />
-                        <span>Abholdatum *</span>
-                      </div>
+                    <label className="block text-sm text-gray-700 mb-2">
+                      {t('pickupDate')} *
                     </label>
-                    <input
-                      type="date"
-                      id="pickupDate"
-                      name="pickupDate"
+                    <DatePicker
                       value={formData.pickupDate}
-                      onChange={handleChange}
-                      min={tomorrowStr}
-                      required
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                      onChange={setPickupDate}
+                      minDate={tomorrow}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Ausgewählter Tag: {selectedDayName}
+                    <p className="text-xs text-gray-500 mt-2">
+                      {t('selectedDay')}: <span className="font-medium text-green-600">{selectedDayName}</span>
                     </p>
                   </div>
 
@@ -226,59 +219,57 @@ export default function CheckoutPage() {
                       htmlFor="pickupLocation"
                       className="block text-sm text-gray-700 mb-2"
                     >
-                      Abholort *
+                      {t('pickupLocation')} *
                     </label>
 
                     {availableLocations.length === 0 ? (
                       <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
                         <p className="text-sm text-red-800">
-                          An diesem Tag sind keine Standorte
-                          geöffnet. Bitte wählen Sie ein anderes
-                          Datum.
+                          {t('noLocationsAvailable')}
                         </p>
                       </div>
                     ) : (
-                      <select
-                        id="pickupLocation"
-                        name="pickupLocation"
+                      <DropdownList
                         value={formData.pickupLocation}
-                        onChange={handleChange}
-                        required
-                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
-                      >
-                        <option value="">
-                          -- Bitte wählen --
-                        </option>
-                        {availableLocations.map(
-                          (location, index) => (
-                            <option
-                              key={index}
-                              value={location.name}
-                            >
-                              {location.name} -{" "}
-                              {location.address}
-                            </option>
-                          ),
-                        )}
-                      </select>
+                        onChange={(value) => handleChange({ target: { name: 'pickupLocation', value } } as React.ChangeEvent<HTMLInputElement>)}
+                        options={availableLocations.map((location): DropdownOption => ({
+                          value: location.name,
+                          label: location.name,
+                        }))}
+                        placeholder={t('pleaseSelect')}
+                        icon={MapPin}
+                        headerTitle={t('pickupLocation')}
+                      />
                     )}
 
                     {/* Show opening hours for selected location */}
                     {selectedLocation && (
-                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-start space-x-2">
-                          <Clock className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                          <div className="text-sm">
-                            <p className="font-medium text-green-900">
-                              Öffnungszeiten am{" "}
-                              {selectedDayName}:
-                            </p>
-                            <p className="text-green-700">
-                              {getHoursForDay(
-                                selectedLocation,
-                                selectedDayName,
-                              )}
-                            </p>
+                      <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                        <div className="space-y-3">
+                          {/* Address */}
+                          <div className="flex items-start space-x-2">
+                            <MapPin className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm">
+                              <p className="font-medium text-green-900">{t('address')}</p>
+                              <p className="text-green-700">{selectedLocation.address}</p>
+                              <p className="text-green-700">{selectedLocation.city}</p>
+                            </div>
+                          </div>
+                          {/* Opening Hours */}
+                          <div className="flex items-start space-x-2">
+                            <Clock className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm">
+                              <p className="font-medium text-green-900">
+                                {t('openingHoursOn')}{" "}
+                                {selectedDayName}:
+                              </p>
+                              <p className="text-green-700">
+                                {getHoursForDay(
+                                  selectedLocation,
+                                  selectedDayName,
+                                )}
+                              </p>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -291,7 +282,7 @@ export default function CheckoutPage() {
                       htmlFor="specialRequests"
                       className="block text-sm text-gray-700 mb-2"
                     >
-                      Besondere Wünsche (Optional)
+                      {t('specialRequests')}
                     </label>
                     <textarea
                       id="specialRequests"
@@ -300,7 +291,7 @@ export default function CheckoutPage() {
                       onChange={handleChange}
                       rows={3}
                       className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
-                      placeholder="z.B. Spezielle Verpackung, Abholzeit, etc."
+                      placeholder={t('specialRequestsPlaceholder')}
                     />
                   </div>
                 </div>

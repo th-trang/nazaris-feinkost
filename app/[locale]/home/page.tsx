@@ -2,9 +2,12 @@
 import { MapPin, Users, Star } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from 'next-intl';
+import { useParams } from 'next/navigation';
 
 export default function HomePage() {
   const t = useTranslations('home');
+  const params = useParams();
+  const locale = typeof params?.locale === 'string' ? params.locale : 'de';
   
   const testimonials = [
     {
@@ -42,7 +45,7 @@ export default function HomePage() {
               </p>
 
               <Link
-                href="/standorte"
+                href={`/${locale}/standorte`}
                 className="inline-flex items-center px-8 py-4 bg-green-600 text-white rounded-full hover:bg-green-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
               >
                 {t('toLocations')}
