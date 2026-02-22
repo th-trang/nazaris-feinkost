@@ -18,8 +18,8 @@ const categoryKeyMap: Record<string, string> = {
   "Desserts": "desserts",
 };
 
-export default function MenuPage() {
-  const t = useTranslations('menu');
+export default function ProductsPage() {
+  const t = useTranslations('products');
   const { addToCart } = useCart();
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [weights, setWeights] = useState<{ [key: string]: string }>({});
@@ -80,7 +80,7 @@ export default function MenuPage() {
           </div>
 
           <h1 className="text-5xl lg:text-6xl tracking-tight text-gray-900 mb-6">
-            {t('ourMenu')}
+            {t('ourProducts')}
           </h1>
 
           <p className="text-lg text-gray-700 leading-relaxed max-w-2xl mx-auto">

@@ -2,7 +2,7 @@
   "nav": {
     "home": "Home",
     "aboutUs": "About Us",
-    "menu": "Menu",
+    "products": "Products",
     "catering": "Catering",
     "locations": "Locations",
     "language": "Language"
@@ -60,10 +60,10 @@
     "buffets": "Buffets & Finger Food",
     "directContact": "Direct Contact"
   },
-  "menu": {
-    "title": "Menu",
+  "products": {
+    "title": "Products",
     "onlineOrder": "Order Online",
-    "ourMenu": "Our Menu",
+    "ourProducts": "Our Products",
     "description": "Discover our homemade Mediterranean specialties and vegan delicacies",
     "all": "All",
     "vegan": "Vegan",

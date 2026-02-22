@@ -21,7 +21,7 @@ export default function Header() {
     const navItems = [
         { label: t('home'), path: "/home" },
         { label: t('aboutUs'), path: "/#uber-uns" },
-        { label: t('menu'), path: "/menu" },
+        { label: t('products'), path: "/products" },
         { label: t('catering'), path: "/catering" },
         { label: t('locations'), path: "/standorte" },
     ];

@@ -1,15 +1,15 @@
 import { test, expect } from '@playwright/test';
 
-test.describe('Menu Page', () => {
+test.describe('Products Page', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/de/menu');
+    await page.goto('/de/products');
   });
 
-  test('should display menu page with heading', async ({ page }) => {
-    // Check page heading - "Unser Menü" in German
+  test('should display products page with heading', async ({ page }) => {
+    // Check page heading - "Unsere Produkte" in German
     const heading = page.locator('h1');
     await expect(heading).toBeVisible();
-    await expect(heading).toContainText('Menü');
+    await expect(heading).toContainText('Produkte');
   });
 
   test('should display product cards', async ({ page }) => {
@@ -105,10 +105,10 @@ test.describe('Menu Page', () => {
   });
 });
 
-test.describe('Menu Page - Responsive', () => {
+test.describe('Products Page - Responsive', () => {
   test('should show mobile cart button on mobile viewport', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/de/menu');
+    await page.goto('/de/products');
     
     // Mobile cart button should be visible (hidden on md and up)
     const mobileCartButton = page.locator('.md\\:hidden').filter({ has: page.locator('svg') });
@@ -117,7 +117,7 @@ test.describe('Menu Page - Responsive', () => {
 
   test('should have scrollable category filters on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/de/menu');
+    await page.goto('/de/products');
     
     // Category filter container should exist
     const filterContainer = page.locator('.overflow-x-auto');
@@ -125,13 +125,13 @@ test.describe('Menu Page - Responsive', () => {
   });
 });
 
-test.describe('Menu Page - English', () => {
-  test('should display English menu page', async ({ page }) => {
-    await page.goto('/en/menu');
+test.describe('Products Page - English', () => {
+  test('should display English products page', async ({ page }) => {
+    await page.goto('/en/products');
     
-    // Check page heading - "Our Menu" in English
+    // Check page heading - "Our Products" in English
     const heading = page.locator('h1');
     await expect(heading).toBeVisible();
-    await expect(heading).toContainText('Menu');
+    await expect(heading).toContainText('Products');
   });
 });

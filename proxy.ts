@@ -7,7 +7,7 @@ const publicPages = [
     "/",
     "/home",
     "/catering",
-    "/menu",
+    "/products",
     "/standorte",
     "/checkout",
 ];
