@@ -22,6 +22,7 @@ export interface CheckoutErrors {
   phone?: string;
   firstName?: string;
   lastName?: string;
+  pickupLocation?: string;
 }
 
 // Validation functions
@@ -130,6 +131,11 @@ export function useCheckout() {
       [name]: value,
     });
 
+    // Clear pickupLocation error when a location is selected
+    if (name === "pickupLocation" && value) {
+      setErrors((prev) => ({ ...prev, pickupLocation: undefined }));
+    }
+
     // Update available locations when date changes
     if (name === "pickupDate") {
       const selectedDate = new Date(value);
@@ -174,22 +180,33 @@ export function useCheckout() {
     // Validate before submission
     const newErrors: CheckoutErrors = {};
 
-    if (!validateName(formData.firstName)) {
+    // Check required fields are not empty
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = t("requiredField");
+    } else if (!validateName(formData.firstName)) {
       newErrors.firstName = t("invalidName");
     }
-    if (!validateName(formData.lastName)) {
+
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = t("requiredField");
+    } else if (!validateName(formData.lastName)) {
       newErrors.lastName = t("invalidName");
     }
-    if (!validateEmail(formData.email)) {
+
+    if (!formData.email.trim()) {
+      newErrors.email = t("requiredField");
+    } else if (!validateEmail(formData.email)) {
       newErrors.email = t("invalidEmail");
     }
-    if (!validatePhone(formData.phone)) {
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = t("requiredField");
+    } else if (!validatePhone(formData.phone)) {
       newErrors.phone = t("invalidPhone");
     }
 
     if (!formData.pickupLocation) {
-      alert("Bitte wählen Sie einen Abholstandort");
-      return;
+      newErrors.pickupLocation = t("requiredField");
     }
 
     if (Object.keys(newErrors).length > 0) {

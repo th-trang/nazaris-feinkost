@@ -5,6 +5,7 @@ import { useCheckout } from "./useCheckout";
 import { getHoursForDay } from "@/app/data/LocationList";
 import DatePicker from "@/app/components/DatePicker";
 import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
+import InputField from "@/app/components/InputField";
 
 export default function CheckoutPage() {
   const {
@@ -88,7 +89,7 @@ export default function CheckoutPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} noValidate>
           <div className="grid lg:grid-cols-3 gap-8">
             {/* Left Column - Forms */}
             <div className="lg:col-span-2 space-y-8">
@@ -102,88 +103,50 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="firstName" className="block text-sm text-gray-700 mb-2">
-                      {t('firstName')} *
-                    </label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      required
-                      className={`w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.firstName ? 'border-red-500' : 'border-gray-200'}`}
-                    />
-                    {errors.firstName && (
-                      <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
-                    )}
-                  </div>
+                  <InputField
+                    id="firstName"
+                    name="firstName"
+                    label={t('firstName')}
+                    value={formData.firstName}
+                    onChange={handleChange}
+                    required
+                    error={errors.firstName}
+                  />
 
-                  <div>
-                    <label htmlFor="lastName" className="block text-sm text-gray-700 mb-2">
-                      {t('lastName')} *
-                    </label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      required
-                      className={`w-full px-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.lastName ? 'border-red-500' : 'border-gray-200'}`}
-                    />
-                    {errors.lastName && (
-                      <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
-                    )}
-                  </div>
+                  <InputField
+                    id="lastName"
+                    name="lastName"
+                    label={t('lastName')}
+                    value={formData.lastName}
+                    onChange={handleChange}
+                    required
+                    error={errors.lastName}
+                  />
 
-                  <div>
-                    <label htmlFor="email" className="block text-sm text-gray-700 mb-2">
-                      {t('email')} *
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Mail className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="email"
-                        id="email"
-                        name="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        required
-                        className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.email ? 'border-red-500' : 'border-gray-200'}`}
-                      />
-                    </div>
-                    {errors.email && (
-                      <p className="mt-1 text-sm text-red-500">{errors.email}</p>
-                    )}
-                  </div>
+                  <InputField
+                    id="email"
+                    name="email"
+                    label={t('email')}
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                    error={errors.email}
+                    icon={Mail}
+                  />
 
-                  <div>
-                    <label htmlFor="phone" className="block text-sm text-gray-700 mb-2">
-                      {t('phone')} *
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <Phone className="h-5 w-5 text-gray-400" />
-                      </div>
-                      <input
-                        type="tel"
-                        id="phone"
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleChange}
-                        required
-                        placeholder="+49 123 456789"
-                        className={`w-full pl-12 pr-4 py-3 bg-white border rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all ${errors.phone ? 'border-red-500' : 'border-gray-200'}`}
-                      />
-                    </div>
-                    {errors.phone && (
-                      <p className="mt-1 text-sm text-red-500">{errors.phone}</p>
-                    )}
-                  </div>
+                  <InputField
+                    id="phone"
+                    name="phone"
+                    label={t('phone')}
+                    type="tel"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                    placeholder="+49 123 456789"
+                    error={errors.phone}
+                    icon={Phone}
+                  />
                 </div>
               </div>
 
@@ -229,17 +192,22 @@ export default function CheckoutPage() {
                         </p>
                       </div>
                     ) : (
-                      <DropdownList
-                        value={formData.pickupLocation}
-                        onChange={(value) => handleChange({ target: { name: 'pickupLocation', value } } as React.ChangeEvent<HTMLInputElement>)}
-                        options={availableLocations.map((location): DropdownOption => ({
-                          value: location.name,
-                          label: location.name,
-                        }))}
-                        placeholder={t('pleaseSelect')}
-                        icon={MapPin}
-                        headerTitle={t('pickupLocation')}
-                      />
+                      <>
+                        <DropdownList
+                          value={formData.pickupLocation}
+                          onChange={(value) => handleChange({ target: { name: 'pickupLocation', value } } as React.ChangeEvent<HTMLInputElement>)}
+                          options={availableLocations.map((location): DropdownOption => ({
+                            value: location.name,
+                            label: location.name,
+                          }))}
+                          placeholder={t('pleaseSelect')}
+                          icon={MapPin}
+                          headerTitle={t('pickupLocation')}
+                        />
+                        {errors.pickupLocation && (
+                          <p className="mt-1 text-sm text-red-500">{errors.pickupLocation}</p>
+                        )}
+                      </>
                     )}
 
                     {/* Show opening hours for selected location */}
