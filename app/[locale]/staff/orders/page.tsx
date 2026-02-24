@@ -2,10 +2,12 @@
 
 import {useCallback, useEffect, useMemo, useState} from "react";
 import Link from "next/link";
-import {useParams} from "next/navigation";
+import {useParams, useRouter} from "next/navigation";
 import {ClipboardList, Lock, LoaderCircle, RefreshCw} from "lucide-react";
 import {useTranslations} from "next-intl";
 import {watchAuthUser, isStaffUser} from "@/app/lib/firebase/auth";
+import {signOut} from "firebase/auth";
+import {getFirebaseAuth} from "@/app/lib/firebase/client";
 import {getStaffOrders} from "@/app/lib/firebase/orders";
 import {StaffOrder} from "@/app/lib/orders/types";
 
@@ -89,10 +91,12 @@ function OrderCard({
 export default function StaffOrdersPage() {
   const t = useTranslations("staffOrders");
   const params = useParams();
+  const router = useRouter();
   const locale = typeof params?.locale === "string" ? params.locale : "de";
 
   const [accessState, setAccessState] = useState<AccessState>("checking");
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [upcoming, setUpcoming] = useState<StaffOrder[]>([]);
   const [past, setPast] = useState<StaffOrder[]>([]);
@@ -117,6 +121,18 @@ export default function StaffOrdersPage() {
       setIsLoadingOrders(false);
     }
   }, [canLoadOrders, t]);
+
+  const handleLogout = async () => {
+    try {
+      setIsSigningOut(true);
+      await signOut(getFirebaseAuth());
+      router.replace(`/${locale}/staff/login`);
+    } catch {
+      setError(t("logoutFailed"));
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -217,16 +233,28 @@ export default function StaffOrdersPage() {
             <p className="text-gray-700 mt-2">{t("description")}</p>
           </div>
 
-          <button
-            onClick={() => {
-              void loadOrders();
-            }}
-            disabled={isLoadingOrders}
-            className="inline-flex items-center gap-2 px-4 py-3 bg-white/80 rounded-xl border border-gray-200 text-gray-700 hover:bg-white disabled:opacity-60"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoadingOrders ? "animate-spin" : ""}`} />
-            <span>{t("refresh")}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                void loadOrders();
+              }}
+              disabled={isLoadingOrders || isSigningOut}
+              className="inline-flex items-center gap-2 px-4 py-3 bg-white/80 rounded-xl border border-gray-200 text-gray-700 hover:bg-white disabled:opacity-60"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoadingOrders ? "animate-spin" : ""}`} />
+              <span>{t("refresh")}</span>
+            </button>
+
+            <button
+              onClick={() => {
+                void handleLogout();
+              }}
+              disabled={isSigningOut || isLoadingOrders}
+              className="inline-flex items-center gap-2 px-4 py-3 bg-white/80 rounded-xl border border-gray-200 text-gray-700 hover:bg-white disabled:opacity-60"
+            >
+              <span>{isSigningOut ? t("loggingOut") : t("logout")}</span>
+            </button>
+          </div>
         </div>
 
         {error && (

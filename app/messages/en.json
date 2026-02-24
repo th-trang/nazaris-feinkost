@@ -175,9 +175,12 @@
     "continueShopping": "Continue Shopping"
   },
   "staffOrders": {
-    "title": "Staff Orders",
+    "title": "Orders",
     "description": "View and manage upcoming and past customer orders.",
     "refresh": "Refresh",
+    "logout": "Logout",
+    "loggingOut": "Logging out...",
+    "logoutFailed": "Could not log out. Please try again.",
     "checkingAccess": "Checking access...",
     "loadingOrders": "Loading orders...",
     "loadError": "Could not load orders. Please try again.",

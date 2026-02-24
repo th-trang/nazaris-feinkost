@@ -175,9 +175,12 @@
     "continueShopping": "Weiter einkaufen"
   },
   "staffOrders": {
-    "title": "Mitarbeiter-Bestellungen",
+    "title": "Bestellungen",
     "description": "Überblick über kommende und vergangene Kundenbestellungen.",
     "refresh": "Aktualisieren",
+    "logout": "Abmelden",
+    "loggingOut": "Abmeldung läuft...",
+    "logoutFailed": "Abmeldung fehlgeschlagen. Bitte erneut versuchen.",
     "checkingAccess": "Zugriff wird geprüft...",
     "loadingOrders": "Bestellungen werden geladen...",
     "loadError": "Bestellungen konnten nicht geladen werden. Bitte erneut versuchen.",
