@@ -5,6 +5,7 @@
     "products": "Products",
     "catering": "Catering",
     "locations": "Locations",
+    "staff": "Staff",
     "language": "Language"
   },
   "home": {
@@ -140,6 +141,7 @@
     "quantity": "Quantity",
     "total": "Total",
     "placeOrder": "Place Order",
+    "placeOrderProcessing": "Placing order...",
     "termsNotice": "By placing your order, you accept our Terms and Privacy Policy",
     "orderSuccess": "Order Successful!",
     "thankYou": "Thank you for your order at Nazari.",
@@ -149,6 +151,7 @@
     "invalidPhone": "Please enter a valid phone number (digits only)",
     "invalidName": "Name cannot contain special characters (§$%&/?*+°^><)",
     "requiredField": "This field is required",
+    "orderFailed": "Your order could not be submitted. Please try again.",
     "pickup": "Pickup",
     "pickupDate": "Pickup Date",
     "selectedDay": "Selected day",
@@ -170,5 +173,39 @@
     "total": "Total",
     "checkout": "Checkout",
     "continueShopping": "Continue Shopping"
+  },
+  "staffOrders": {
+    "title": "Staff Orders",
+    "description": "View and manage upcoming and past customer orders.",
+    "refresh": "Refresh",
+    "checkingAccess": "Checking access...",
+    "loadingOrders": "Loading orders...",
+    "loadError": "Could not load orders. Please try again.",
+    "signInRequiredTitle": "Sign in required",
+    "signInRequiredDescription": "Please sign in with an authorized staff account.",
+    "accessDeniedTitle": "Access denied",
+    "accessDeniedDescription": "Your account is not authorized to view staff orders.",
+    "backHome": "Back to home",
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "noUpcoming": "No upcoming orders.",
+    "noPast": "No past orders.",
+    "orderNumber": "Order Number",
+    "customer": "Customer",
+    "pickup": "Pickup",
+    "payment": "Payment",
+    "total": "Total"
+  },
+  "staffLogin": {
+    "title": "Staff Login",
+    "description": "Sign in with your authorized staff account.",
+    "email": "Email",
+    "password": "Password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "invalidCredentials": "Invalid email or password.",
+    "noStaffAccess": "Your account is signed in but does not have staff access.",
+    "configMissing": "Firebase configuration is missing.",
+    "goToOrders": "Go to staff orders"
   }
 }

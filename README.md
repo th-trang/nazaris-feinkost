@@ -1,36 +1,61 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nazaris Feinkost
 
-## Getting Started
+## Local development
 
-First, run the development server:
+Run the frontend:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Run Cloud Functions locally:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd functions
+npm install
+npm run build
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Firebase Phase 1 (orders + staff auth)
 
-## Learn More
+### 1) Frontend environment variables
 
-To learn more about Next.js, take a look at the following resources:
+Create `.env.local` in the project root:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+NEXT_PUBLIC_FIREBASE_FUNCTIONS_REGION=europe-west3
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 2) Deploy Firebase config
 
-## Deploy on Vercel
+From project root:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
+firebase deploy --only functions
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### 3) Grant staff role
+
+`setStaffClaim` is an admin-only callable function. The caller must have `admin: true` custom claim.
+
+Example payload:
+
+```json
+{
+	"uid": "STAFF_USER_UID",
+	"staff": true
+}
+```
+
+### 4) What Phase 1 includes
+
+- `createOrder` callable Cloud Function with server-side validation
+- Firestore order persistence (`orders` collection)
+- locked-down Firestore rules for orders/users/meta
+- staff claim helper utilities on the frontend

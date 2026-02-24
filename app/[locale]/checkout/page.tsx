@@ -13,6 +13,9 @@ export default function CheckoutPage() {
     formData,
     errors,
     isSubmitted,
+    isSubmitting,
+    submitError,
+    orderNumber,
     cartItems,
     cartTotal,
     availableLocations,
@@ -52,7 +55,7 @@ export default function CheckoutPage() {
               <p className="text-sm text-green-800 mb-2">
                 {t('orderNumber')}:{" "}
                 <span className="font-mono">
-                  #{Math.floor(Math.random() * 10000)}
+                  {orderNumber ?? "-"}
                 </span>
               </p>
               <p className="text-sm text-green-800">
@@ -341,10 +344,15 @@ export default function CheckoutPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full mt-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-lg hover:shadow-xl"
                 >
-                  {t('placeOrder')}
+                  {isSubmitting ? t('placeOrderProcessing') : t('placeOrder')}
                 </button>
+
+                {submitError && (
+                  <p className="text-sm text-red-600 text-center mt-3">{submitError}</p>
+                )}
 
                 <p className="text-xs text-gray-600 text-center mt-4">
                   {t('termsNotice')}

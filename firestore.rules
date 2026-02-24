@@ -1,0 +1,39 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isStaff() {
+      return isSignedIn() && (
+        request.auth.token.staff == true ||
+        request.auth.token.admin == true
+      );
+    }
+
+    match /orders/{orderId} {
+      allow read: if isStaff() ||
+        (isSignedIn() && resource.data.customerUid == request.auth.uid);
+
+      // Orders are written by trusted backend Cloud Functions only.
+      allow create, update, delete: if false;
+    }
+
+    match /users/{userId} {
+      allow read: if isStaff() || (isSignedIn() && request.auth.uid == userId);
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow delete: if isStaff();
+    }
+
+    // Internal metadata used by backend functions.
+    match /meta/{docId} {
+      allow read, write: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

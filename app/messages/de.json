@@ -5,6 +5,7 @@
     "products": "Produkte",
     "catering": "Catering",
     "locations": "Standorte",
+    "staff": "Mitarbeiter",
     "language": "Sprache"
   },
   "home": {
@@ -140,6 +141,7 @@
     "quantity": "Menge",
     "total": "Gesamt",
     "placeOrder": "Bestellung abschließen",
+    "placeOrderProcessing": "Bestellung wird übermittelt...",
     "termsNotice": "Mit der Bestellung akzeptieren Sie unsere AGB und Datenschutzerklärung",
     "orderSuccess": "Bestellung erfolgreich!",
     "thankYou": "Vielen Dank für Ihre Bestellung bei Nazari.",
@@ -149,6 +151,7 @@
     "invalidPhone": "Bitte geben Sie eine gültige Telefonnummer ein (nur Ziffern)",
     "invalidName": "Name darf keine Sonderzeichen enthalten (§$%&/?*+°^><)",
     "requiredField": "Dieses Feld ist erforderlich",
+    "orderFailed": "Ihre Bestellung konnte nicht übermittelt werden. Bitte versuchen Sie es erneut.",
     "pickup": "Abholung",
     "pickupDate": "Abholdatum",
     "selectedDay": "Ausgewählter Tag",
@@ -170,5 +173,39 @@
     "total": "Gesamt",
     "checkout": "Zur Kasse",
     "continueShopping": "Weiter einkaufen"
+  },
+  "staffOrders": {
+    "title": "Mitarbeiter-Bestellungen",
+    "description": "Überblick über kommende und vergangene Kundenbestellungen.",
+    "refresh": "Aktualisieren",
+    "checkingAccess": "Zugriff wird geprüft...",
+    "loadingOrders": "Bestellungen werden geladen...",
+    "loadError": "Bestellungen konnten nicht geladen werden. Bitte erneut versuchen.",
+    "signInRequiredTitle": "Anmeldung erforderlich",
+    "signInRequiredDescription": "Bitte melden Sie sich mit einem autorisierten Mitarbeiterkonto an.",
+    "accessDeniedTitle": "Zugriff verweigert",
+    "accessDeniedDescription": "Ihr Konto ist nicht berechtigt, Mitarbeiter-Bestellungen einzusehen.",
+    "backHome": "Zur Startseite",
+    "upcoming": "Kommend",
+    "past": "Vergangen",
+    "noUpcoming": "Keine kommenden Bestellungen.",
+    "noPast": "Keine vergangenen Bestellungen.",
+    "orderNumber": "Bestellnummer",
+    "customer": "Kunde",
+    "pickup": "Abholung",
+    "payment": "Zahlung",
+    "total": "Gesamt"
+  },
+  "staffLogin": {
+    "title": "Mitarbeiter-Login",
+    "description": "Melden Sie sich mit Ihrem autorisierten Mitarbeiterkonto an.",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "submit": "Anmelden",
+    "submitting": "Anmeldung läuft...",
+    "invalidCredentials": "Ungültige E-Mail oder ungültiges Passwort.",
+    "noStaffAccess": "Ihr Konto ist angemeldet, hat aber keinen Mitarbeiterzugriff.",
+    "configMissing": "Firebase-Konfiguration fehlt.",
+    "goToOrders": "Zu den Mitarbeiter-Bestellungen"
   }
 }

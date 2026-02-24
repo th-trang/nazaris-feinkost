@@ -10,6 +10,8 @@ const publicPages = [
     "/products",
     "/standorte",
     "/checkout",
+    "/staff/orders",
+    "staff/login",
 ];
 
 const intlMiddleware = createIntlMiddleware({

@@ -26,6 +26,14 @@ yarn-error.log*
 # env files
 .env*
 
+# firebase/local secrets
+.firebase/
+firebase-debug*.log
+serviceAccount*.json
+*-service-account*.json
+functions/.runtimeconfig.json
+functions/.secret.local
+
 # vercel
 .vercel
 

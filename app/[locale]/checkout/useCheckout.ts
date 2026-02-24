@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useTranslations } from "next-intl";
 import { getDayName, getLocationsForDate } from "@/app/data/LocationList";
+import { createOrder } from "@/app/lib/firebase/orders";
+import { CreateOrderInput } from "@/app/lib/orders/types";
 
 export interface CheckoutFormData {
   firstName: string;
@@ -53,6 +55,9 @@ export function useCheckout() {
 
   const { cartItems, cartTotal, clearCart } = useCart();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [orderNumber, setOrderNumber] = useState<string | null>(null);
   const [errors, setErrors] = useState<CheckoutErrors>({});
   const [formData, setFormData] = useState<CheckoutFormData>({
     firstName: "",
@@ -174,8 +179,9 @@ export function useCheckout() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
 
     // Validate before submission
     const newErrors: CheckoutErrors = {};
@@ -214,15 +220,37 @@ export function useCheckout() {
       return;
     }
 
-    setIsSubmitted(true);
+    const payload: CreateOrderInput = {
+      firstName: formData.firstName.trim(),
+      lastName: formData.lastName.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      pickupDate: formData.pickupDate,
+      pickupLocation: formData.pickupLocation,
+      specialRequests: formData.specialRequests?.trim(),
+      paymentMethod: formData.paymentMethod === "paypal" ? "paypal" : "card",
+      items: cartItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        quantity: item.quantity,
+        unitPrice: item.price,
+      })),
+    };
 
-    // Simulate order processing
-    setTimeout(() => {
+    try {
+      setIsSubmitting(true);
+      const result = await createOrder(payload);
+      setOrderNumber(result.orderNumber);
+      setIsSubmitted(true);
       clearCart();
       setTimeout(() => {
         router.push("/");
       }, 2000);
-    }, 1500);
+    } catch {
+      setSubmitError(t("orderFailed"));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return {
@@ -230,6 +258,9 @@ export function useCheckout() {
     formData,
     errors,
     isSubmitted,
+    isSubmitting,
+    submitError,
+    orderNumber,
     cartItems,
     cartTotal,
     availableLocations,

@@ -1,0 +1,15 @@
+# Compiled JavaScript files
+lib/**/*.js
+lib/**/*.js.map
+
+# TypeScript v1 declaration files
+typings/
+
+# Node.js dependency directory
+node_modules/
+*.local
+*-firebase-adminsdk-*.json
+
+.nazaris-feinkost-firebase-adminsdk-fbsvc-55e5a0c2bd.json
+.set-staff-claim.mjs
+.remove-staff-claim.mjs

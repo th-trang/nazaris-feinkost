@@ -24,6 +24,7 @@ export default function Header() {
         { label: t('products'), path: "/products" },
         { label: t('catering'), path: "/catering" },
         { label: t('locations'), path: "/standorte" },
+        { label: t('staff'), path: "/staff/login" },
     ];
 
     const locale = typeof params?.locale === 'string' ? params.locale : 'en';
