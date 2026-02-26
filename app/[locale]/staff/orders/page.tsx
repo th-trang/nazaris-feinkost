@@ -250,7 +250,7 @@ export default function StaffOrdersPage() {
                 void handleLogout();
               }}
               disabled={isSigningOut || isLoadingOrders}
-              className="inline-flex items-center gap-2 px-4 py-3 bg-white/80 rounded-xl border border-gray-200 text-gray-700 hover:bg-white disabled:opacity-60"
+              className="inline-flex items-center gap-2 px-4 py-3 bg-white/80 rounded-xl border-2 border-red-500 text-red-600 hover:bg-white disabled:opacity-60"
             >
               <span>{isSigningOut ? t("loggingOut") : t("logout")}</span>
             </button>
