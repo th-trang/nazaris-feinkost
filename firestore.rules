@@ -27,6 +27,11 @@ service cloud.firestore {
       allow delete: if isStaff();
     }
 
+    match /locations/{locationId} {
+      allow read: if true;
+      allow create, update, delete: if false;
+    }
+
     // Internal metadata used by backend functions.
     match /meta/{docId} {
       allow read, write: if false;

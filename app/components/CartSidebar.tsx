@@ -65,7 +65,7 @@ export function CartSidebar() {
                   {t('emptyMessage')}
                 </p>
                 <Link
-                  href="/menu"
+                  href="/products"
                   onClick={() => setIsCartOpen(false)}
                   className="px-6 py-3 bg-green-600 text-white rounded-full hover:bg-green-700 transition-all shadow-lg"
                 >

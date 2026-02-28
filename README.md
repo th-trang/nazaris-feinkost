@@ -55,7 +55,36 @@ Example payload:
 
 ### 4) What Phase 1 includes
 
-- `createOrder` callable Cloud Function with server-side validation
-- Firestore order persistence (`orders` collection)
-- locked-down Firestore rules for orders/users/meta
-- staff claim helper utilities on the frontend
+
+## Firebase Firestore data model (Phase 2)
+
+The backend now writes and maintains these collections:
+
+- `orders`
+	- `orderNumber`, `status`, `customerUid`, `customerUserId`
+	- customer fields: `customerName`, `customerEmail`, `customerPhone`
+	- pickup fields: `pickupDate`, `pickupLocation`, `pickupLocationId`
+	- payment fields: `paymentStatus`, `payment.method`, `payment.status`
+	- line items: `items[]` with `id`, `name`, `quantity`, `unitPrice`
+	- timestamps: `createdAt`, `updatedAt`
+- `users`
+	- customer/staff profile data
+	- role/type fields (`type`, `isStaff`, `isAdmin` where relevant)
+	- timestamps such as `updatedAt`, `lastOrderAt`
+- `locations`
+	- market metadata (`name`, `address`, `city`, `hours`, `openDays`)
+	- flags: `active`, `sortOrder`
+	- timestamps: `createdAt`, `updatedAt`
+
+### Sync location catalog to Firestore
+
+`syncLocationsCatalog` callable function was added in `functions/src/index.ts`.
+
+Run from your client app (logged in as staff/admin) once after deployment to create/update `locations` documents.
+
+### Deploy rules/indexes/functions
+
+```bash
+firebase deploy --only firestore:rules,firestore:indexes
+firebase deploy --only functions
+```

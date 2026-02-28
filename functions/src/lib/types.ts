@@ -1,0 +1,20 @@
+export type PaymentMethod = "card" | "paypal";
+
+export interface OrderItemInput {
+	id: string;
+	name: string;
+	quantity: number;
+	unitPrice: number;
+}
+
+export interface CreateOrderInput {
+	firstName: string;
+	lastName: string;
+	email: string;
+	phone: string;
+	pickupDate: string;
+	pickupLocation: string;
+	specialRequests?: string;
+	paymentMethod: PaymentMethod;
+	items: OrderItemInput[];
+}

@@ -138,13 +138,6 @@ export default function StaffLoginPage() {
             >
               {isSubmitting ? t("submitting") : t("submit")}
             </button>
-
-            <Link
-              href={`/${locale}/staff/orders`}
-              className="block text-sm text-green-700 text-center hover:underline"
-            >
-              {t("goToOrders")}
-            </Link>
           </form>
         )}
       </div>
