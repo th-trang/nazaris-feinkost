@@ -10,6 +10,15 @@ export const isStaffUser = async (user: User | null): Promise<boolean> => {
   return idTokenResult.claims.staff === true || idTokenResult.claims.admin === true;
 };
 
+export const isAdminUser = async (user: User | null): Promise<boolean> => {
+  if (!user) {
+    return false;
+  }
+
+  const idTokenResult = await user.getIdTokenResult();
+  return idTokenResult.claims.admin === true;
+};
+
 export const requireStaffUser = async (user: User | null): Promise<void> => {
   const hasStaffAccess = await isStaffUser(user);
   if (!hasStaffAccess) {

@@ -26,6 +26,14 @@ export interface CreateOrderResponse {
   status: "pending";
 }
 
+export interface StaffOrderItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  weightInGrams?: number;
+}
+
 export interface StaffOrder {
   id: string;
   orderNumber: string;
@@ -48,10 +56,33 @@ export interface StaffOrder {
     subtotal: number;
     currency: string;
   };
+  items: StaffOrderItem[];
   createdAt?: string;
 }
 
 export interface StaffOrdersResult {
-  upcoming: StaffOrder[];
-  past: StaffOrder[];
+  uncompleted: StaffOrder[];
+  completed: StaffOrder[];
+}
+
+export interface StaffUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  createdAt?: string;
+  type: string;
+}
+
+export interface StaffUsersResult {
+  users: StaffUser[];
+}
+
+export interface UpdateUserInput {
+  userId: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
 }

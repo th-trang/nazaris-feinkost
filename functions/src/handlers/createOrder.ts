@@ -88,6 +88,7 @@ export const createOrder = onCall(FUNCTION_OPTIONS, async (request) => {
 	await orderRef.set({
 		orderNumber,
 		status: "pending",
+		isComplete: false,
 		customerUid,
 		customerUserId,
 		customerName: `${payload.firstName} ${payload.lastName}`,

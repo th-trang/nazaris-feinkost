@@ -13,17 +13,26 @@ service cloud.firestore {
       );
     }
 
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
     match /orders/{orderId} {
       allow read: if isStaff() ||
         (isSignedIn() && resource.data.customerUid == request.auth.uid);
 
-      // Orders are written by trusted backend Cloud Functions only.
-      allow create, update, delete: if false;
+      // Staff can update order status (mark as completed)
+      allow update: if isStaff();
+      
+      // Orders are created by trusted backend Cloud Functions only.
+      allow create, delete: if false;
     }
 
     match /users/{userId} {
       allow read: if isStaff() || (isSignedIn() && request.auth.uid == userId);
-      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      allow create: if isSignedIn() && request.auth.uid == userId;
+      // Users can update themselves, admin can update any user
+      allow update: if (isSignedIn() && request.auth.uid == userId) || isAdmin();
       allow delete: if isStaff();
     }
 
