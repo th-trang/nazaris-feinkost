@@ -5,6 +5,7 @@ export interface OrderItemInput {
 	name: string;
 	quantity: number;
 	unitPrice: number;
+	weightInGrams?: number;
 }
 
 export interface CreateOrderInput {

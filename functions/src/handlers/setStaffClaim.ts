@@ -2,7 +2,12 @@ import {getAuth} from "firebase-admin/auth";
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 
-export const setStaffClaim = onCall(async (request) => {
+const FUNCTION_OPTIONS = {
+	region: "europe-west3",
+	invoker: "public" as const,
+};
+
+export const setStaffClaim = onCall(FUNCTION_OPTIONS, async (request) => {
 	if (!request.auth) {
 		throw new HttpsError("unauthenticated", "Sign in is required.");
 	}

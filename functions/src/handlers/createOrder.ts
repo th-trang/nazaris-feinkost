@@ -4,6 +4,11 @@ import {onCall} from "firebase-functions/v2/https";
 import {locationCatalog} from "../locationCatalog.js";
 import {assertValidCreateOrderPayload, roundCurrency} from "../lib/validation.js";
 
+const FUNCTION_OPTIONS = {
+	region: "europe-west3",
+	invoker: "public" as const,
+};
+
 const toGuestUserId = (email: string): string => {
 	const hash = createHash("sha256").update(email).digest("hex").slice(0, 24);
 	return `guest_${hash}`;
@@ -16,7 +21,7 @@ const locationIdByName = new Map(
 const getPickupLocationId = (pickupLocation: string): string =>
 	locationIdByName.get(pickupLocation.trim().toLowerCase()) ?? "custom";
 
-export const createOrder = onCall(async (request) => {
+export const createOrder = onCall(FUNCTION_OPTIONS, async (request) => {
 	const payload = assertValidCreateOrderPayload(request.data);
 	const db = getFirestore();
 	const customerUid = request.auth?.uid ?? null;

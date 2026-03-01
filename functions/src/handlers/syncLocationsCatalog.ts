@@ -2,7 +2,12 @@ import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {HttpsError, onCall} from "firebase-functions/v2/https";
 import {locationCatalog} from "../locationCatalog.js";
 
-export const syncLocationsCatalog = onCall(async (request) => {
+const FUNCTION_OPTIONS = {
+	region: "europe-west3",
+	invoker: "public" as const,
+};
+
+export const syncLocationsCatalog = onCall(FUNCTION_OPTIONS, async (request) => {
 	if (!request.auth) {
 		throw new HttpsError("unauthenticated", "Sign in is required.");
 	}

@@ -234,6 +234,7 @@ export function useCheckout() {
         name: item.name,
         quantity: item.quantity,
         unitPrice: item.price,
+        ...(item.weightInGrams != null && { weightInGrams: item.weightInGrams }),
       })),
     };
 

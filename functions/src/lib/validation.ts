@@ -86,6 +86,7 @@ export const assertValidCreateOrderPayload = (
 		const name = (parsedItem.name ?? "").trim();
 		const quantity = Number(parsedItem.quantity ?? 0);
 		const unitPrice = Number(parsedItem.unitPrice ?? -1);
+		const rawWeight = parsedItem.weightInGrams;
 
 		if (!id || !name) {
 			throw new HttpsError(
@@ -108,12 +109,28 @@ export const assertValidCreateOrderPayload = (
 			);
 		}
 
-		return {
+		let weightInGrams: number | undefined;
+		if (rawWeight !== undefined && rawWeight !== null) {
+			const w = Number(rawWeight);
+			if (!Number.isInteger(w) || w <= 0) {
+				throw new HttpsError(
+					"invalid-argument",
+					"Order item weightInGrams must be a positive integer when provided.",
+				);
+			}
+			weightInGrams = w;
+		}
+
+		const result: OrderItemInput = {
 			id,
 			name,
 			quantity,
 			unitPrice: roundCurrency(unitPrice),
 		};
+		if (weightInGrams !== undefined) {
+			result.weightInGrams = weightInGrams;
+		}
+		return result;
 	});
 
 	return {
