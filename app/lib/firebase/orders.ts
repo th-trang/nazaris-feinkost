@@ -1,4 +1,5 @@
 import {httpsCallable} from "firebase/functions";
+import {sendPasswordResetEmail} from "firebase/auth";
 import {
   collection,
   doc,
@@ -9,17 +10,18 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import {getFirebaseDb, getFirebaseFunctions, isFirebaseConfigured} from "./client";
+import {getFirebaseAuth, getFirebaseDb, getFirebaseFunctions, isFirebaseConfigured} from "./client";
 import {
   CreateOrderInput,
   CreateOrderResponse,
+  CreateStaffUserInput,
   PaymentMethod,
   StaffOrder,
   StaffOrderItem,
   StaffOrdersResult,
   StaffUser,
   StaffUsersResult,
-  UpdateUserInput,
+  UpdateStaffUserInput,
 } from "../orders/types";
 
 export const createOrder = async (
@@ -138,63 +140,77 @@ export const markOrderCompleted = async (orderId: string): Promise<void> => {
   });
 };
 
-const toStaffUser = (id: string, data: Record<string, unknown>): StaffUser => {
-  const createdAtRaw = (data.createdAt as {toDate?: () => Date} | undefined)?.toDate?.();
-
-  return {
-    id,
-    firstName: String(data.firstName ?? ""),
-    lastName: String(data.lastName ?? ""),
-    email: String(data.email ?? ""),
-    phone: String(data.phone ?? ""),
-    type: String(data.type ?? "customer"),
-    createdAt: createdAtRaw ? createdAtRaw.toISOString() : undefined,
-  };
-};
-
 export const getStaffUsers = async (): Promise<StaffUsersResult> => {
   if (!isFirebaseConfigured) {
     throw new Error("Firebase is not configured in this environment.");
   }
 
-  const usersRef = collection(getFirebaseDb(), "users");
-  const usersQuery = query(
-    usersRef,
-    orderBy("createdAt", "desc"),
-    limit(500),
+  const callable = httpsCallable<void, StaffUsersResult>(
+    getFirebaseFunctions(),
+    "listStaffUsers",
   );
 
-  const snapshot = await getDocs(usersQuery);
-
-  return {
-    users: snapshot.docs.map((d) =>
-      toStaffUser(d.id, d.data() as Record<string, unknown>),
-    ),
-  };
+  const result = await callable();
+  return result.data;
 };
 
-export const updateUser = async (input: UpdateUserInput): Promise<void> => {
+export const createStaffUser = async (input: CreateStaffUserInput): Promise<StaffUser> => {
   if (!isFirebaseConfigured) {
     throw new Error("Firebase is not configured in this environment.");
   }
 
-  const userRef = doc(getFirebaseDb(), "users", input.userId);
-  const updates: Record<string, unknown> = {
-    updatedAt: new Date(),
-  };
+  const callable = httpsCallable<CreateStaffUserInput, StaffUser>(
+    getFirebaseFunctions(),
+    "createStaffUser",
+  );
 
-  if (input.firstName !== undefined) {
-    updates.firstName = input.firstName;
-  }
-  if (input.lastName !== undefined) {
-    updates.lastName = input.lastName;
-  }
-  if (input.email !== undefined) {
-    updates.email = input.email;
-  }
-  if (input.phone !== undefined) {
-    updates.phone = input.phone;
+  const result = await callable(input);
+  return result.data;
+};
+
+export const updateStaffUser = async (input: UpdateStaffUserInput): Promise<StaffUser> => {
+  if (!isFirebaseConfigured) {
+    throw new Error("Firebase is not configured in this environment.");
   }
 
-  await updateDoc(userRef, updates);
+  const callable = httpsCallable<UpdateStaffUserInput, StaffUser>(
+    getFirebaseFunctions(),
+    "updateStaffUser",
+  );
+
+  const result = await callable(input);
+  return result.data;
+};
+
+export const deleteStaffUser = async (uid: string): Promise<void> => {
+  if (!isFirebaseConfigured) {
+    throw new Error("Firebase is not configured in this environment.");
+  }
+
+  const callable = httpsCallable<{uid: string}, {success: boolean}>(
+    getFirebaseFunctions(),
+    "deleteStaffUser",
+  );
+
+  await callable({uid});
+};
+
+export const resetStaffUserPassword = async (uid: string): Promise<{email: string}> => {
+  if (!isFirebaseConfigured) {
+    throw new Error("Firebase is not configured in this environment.");
+  }
+
+  // First verify user is staff and get their email via Cloud Function
+  const callable = httpsCallable<{uid: string}, {success: boolean; email: string}>(
+    getFirebaseFunctions(),
+    "resetStaffUserPassword",
+  );
+
+  const result = await callable({uid});
+  const email = result.data.email;
+
+  // Actually send the password reset email using Firebase Auth client SDK
+  await sendPasswordResetEmail(getFirebaseAuth(), email);
+
+  return {email};
 };

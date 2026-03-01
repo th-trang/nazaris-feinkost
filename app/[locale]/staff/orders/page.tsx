@@ -14,13 +14,16 @@ import {
   Edit2,
   Save,
   XCircle,
+  Plus,
+  Trash2,
+  KeyRound,
 } from "lucide-react";
 import {useTranslations} from "next-intl";
 import {watchAuthUser, isStaffUser, isAdminUser} from "@/app/lib/firebase/auth";
 import {signOut} from "firebase/auth";
 import {getFirebaseAuth} from "@/app/lib/firebase/client";
-import {getStaffOrders, markOrderCompleted, getStaffUsers, updateUser} from "@/app/lib/firebase/orders";
-import {StaffOrder, StaffUser} from "@/app/lib/orders/types";
+import {getStaffOrders, markOrderCompleted, getStaffUsers, updateStaffUser, createStaffUser, deleteStaffUser, resetStaffUserPassword} from "@/app/lib/firebase/orders";
+import {StaffOrder, StaffUser, CreateStaffUserInput} from "@/app/lib/orders/types";
 
 type AccessState = "checking" | "unauthenticated" | "forbidden" | "authorized";
 type Tab = "orders" | "users";
@@ -43,7 +46,7 @@ const toDateLabel = (date: string, locale: string): string => {
   });
 };
 
-const toCreatedAtLabel = (dateStr: string | undefined, locale: string): string => {
+const toCreatedAtLabel = (dateStr: string | undefined | null, locale: string): string => {
   if (!dateStr) {
     return "-";
   }
@@ -263,24 +266,52 @@ function UserRow({
   user,
   locale,
   t,
+  currentUserUid,
   onUpdate,
+  onDelete,
+  onResetPassword,
 }: {
   user: StaffUser;
   locale: string;
   t: ReturnType<typeof useTranslations>;
-  onUpdate: (userId: string, updates: Partial<StaffUser>) => Promise<void>;
+  currentUserUid: string;
+  onUpdate: (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => Promise<void>;
+  onDelete: (uid: string, email: string) => Promise<void>;
+  onResetPassword: (uid: string) => Promise<void>;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [firstName, setFirstName] = useState(user.firstName);
-  const [lastName, setLastName] = useState(user.lastName);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
+  const [displayName, setDisplayName] = useState(user.displayName || "");
   const [email, setEmail] = useState(user.email);
-  const [phone, setPhone] = useState(user.phone);
+  const [isAdmin, setIsAdmin] = useState(user.isAdmin);
+
+  const handleDelete = async () => {
+    if (!confirm(t("confirmDeleteUser", { email: user.email }))) return;
+    setIsDeleting(true);
+    try {
+      await onDelete(user.uid, user.email);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleResetPassword = async () => {
+    if (!confirm(t("confirmResetPassword", { email: user.email }))) return;
+    setIsResettingPassword(true);
+    try {
+      await onResetPassword(user.uid);
+      alert(t("passwordResetSent", { email: user.email }));
+    } finally {
+      setIsResettingPassword(false);
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
     try {
-      await onUpdate(user.id, {firstName, lastName, email, phone});
+      await onUpdate(user.uid, {displayName, email, isAdmin});
       setIsEditing(false);
     } finally {
       setIsSaving(false);
@@ -288,10 +319,9 @@ function UserRow({
   };
 
   const handleCancel = () => {
-    setFirstName(user.firstName);
-    setLastName(user.lastName);
+    setDisplayName(user.displayName || "");
     setEmail(user.email);
-    setPhone(user.phone);
+    setIsAdmin(user.isAdmin);
     setIsEditing(false);
   };
 
@@ -299,25 +329,13 @@ function UserRow({
     return (
       <tr className="bg-blue-50">
         <td className="px-4 py-3">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
-              className="w-24 px-2 py-1 border border-gray-300 rounded-lg text-sm"
-              placeholder={t("firstName")}
-            />
-            <input
-              type="text"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-              className="w-24 px-2 py-1 border border-gray-300 rounded-lg text-sm"
-              placeholder={t("lastName")}
-            />
-          </div>
-        </td>
-        <td className="px-4 py-3 text-sm text-gray-600">
-          {toCreatedAtLabel(user.createdAt, locale)}
+          <input
+            type="text"
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm"
+            placeholder={t("displayName")}
+          />
         </td>
         <td className="px-4 py-3">
           <input
@@ -328,14 +346,19 @@ function UserRow({
             placeholder={t("email")}
           />
         </td>
+        <td className="px-4 py-3 text-sm text-gray-600">
+          {toCreatedAtLabel(user.createdAt, locale)}
+        </td>
         <td className="px-4 py-3">
-          <input
-            type="tel"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm"
-            placeholder={t("phone")}
-          />
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={isAdmin}
+              onChange={(e) => setIsAdmin(e.target.checked)}
+              className="rounded border-gray-300"
+            />
+            <span className="text-sm text-gray-700">{t("admin")}</span>
+          </label>
         </td>
         <td className="px-4 py-3">
           <div className="flex gap-2 justify-end">
@@ -362,22 +385,186 @@ function UserRow({
   return (
     <tr className="hover:bg-gray-50">
       <td className="px-4 py-3 text-sm text-gray-900">
-        {user.firstName} {user.lastName}
+        {user.displayName || "-"}
       </td>
+      <td className="px-4 py-3 text-sm text-gray-900">{user.email}</td>
       <td className="px-4 py-3 text-sm text-gray-600">
         {toCreatedAtLabel(user.createdAt, locale)}
       </td>
-      <td className="px-4 py-3 text-sm text-gray-900">{user.email}</td>
-      <td className="px-4 py-3 text-sm text-gray-900">{user.phone}</td>
+      <td className="px-4 py-3">
+        <div className="flex gap-2">
+          {user.isAdmin && (
+            <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
+              {t("admin")}
+            </span>
+          )}
+          {user.isStaff && (
+            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+              {t("staff")}
+            </span>
+          )}
+        </div>
+      </td>
       <td className="px-4 py-3 text-right">
-        <button
-          onClick={() => setIsEditing(true)}
-          className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-        >
-          <Edit2 className="w-4 h-4" />
-        </button>
+        <div className="flex gap-1 justify-end">
+          <button
+            onClick={() => setIsEditing(true)}
+            className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+            title={t("edit")}
+          >
+            <Edit2 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={handleResetPassword}
+            disabled={isResettingPassword}
+            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-60"
+            title={t("resetPassword")}
+          >
+            {isResettingPassword ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+          </button>
+          {user.uid !== currentUserUid && (
+            <button
+              onClick={handleDelete}
+              disabled={isDeleting}
+              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
+              title={t("deleteUser")}
+            >
+              {isDeleting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+            </button>
+          )}
+        </div>
       </td>
     </tr>
+  );
+}
+
+function CreateStaffModal({
+  t,
+  onClose,
+  onCreate,
+}: {
+  t: ReturnType<typeof useTranslations>;
+  onClose: () => void;
+  onCreate: (input: CreateStaffUserInput) => Promise<void>;
+}) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+
+    if (!email.trim() || !password.trim()) {
+      setError(t("emailPasswordRequired"));
+      return;
+    }
+
+    if (password.length < 6) {
+      setError(t("passwordTooShort"));
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      await onCreate({
+        email: email.trim(),
+        password,
+        displayName: displayName.trim() || undefined,
+        isAdmin,
+      });
+      onClose();
+    } catch {
+      setError(t("createUserError"));
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
+        <div className="border-b border-gray-100 p-5 flex items-center justify-between">
+          <h2 className="text-xl font-semibold text-gray-900">{t("addStaffUser")}</h2>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
+          >
+            <X className="w-5 h-5 text-gray-500" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">{t("email")} *</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">{t("password")} *</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              required
+              minLength={6}
+            />
+            <p className="text-xs text-gray-500 mt-1">{t("minPassword")}</p>
+          </div>
+
+          <div>
+            <label className="block text-sm text-gray-700 mb-1">{t("displayName")}</label>
+            <input
+              type="text"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            />
+          </div>
+
+          <div>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={isAdmin}
+                onChange={(e) => setIsAdmin(e.target.checked)}
+                className="rounded border-gray-300"
+              />
+              <span className="text-sm text-gray-700">{t("makeAdmin")}</span>
+            </label>
+          </div>
+
+          {error && (
+            <p className="text-sm text-red-600">{error}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={isCreating}
+            className="w-full py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          >
+            {isCreating ? (
+              <>
+                <LoaderCircle className="w-5 h-5 animate-spin" />
+                {t("creating")}
+              </>
+            ) : (
+              t("createUser")
+            )}
+          </button>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -385,13 +572,19 @@ function UsersTable({
   users,
   locale,
   t,
+  currentUserUid,
   onUpdate,
+  onDelete,
+  onResetPassword,
   isLoading,
 }: {
   users: StaffUser[];
   locale: string;
   t: ReturnType<typeof useTranslations>;
-  onUpdate: (userId: string, updates: Partial<StaffUser>) => Promise<void>;
+  currentUserUid: string;
+  onUpdate: (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => Promise<void>;
+  onDelete: (uid: string, email: string) => Promise<void>;
+  onResetPassword: (uid: string) => Promise<void>;
   isLoading: boolean;
 }) {
   if (isLoading) {
@@ -417,16 +610,16 @@ function UsersTable({
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("userName")}
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("createdAt")}
+                {t("displayName")}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t("email")}
               </th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("phone")}
+                {t("createdAt")}
+              </th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {t("role")}
               </th>
               <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t("actions")}
@@ -436,11 +629,14 @@ function UsersTable({
           <tbody className="divide-y divide-gray-200">
             {users.map((user) => (
               <UserRow
-                key={user.id}
+                key={user.uid}
                 user={user}
                 locale={locale}
                 t={t}
+                currentUserUid={currentUserUid}
                 onUpdate={onUpdate}
+                onDelete={onDelete}
+                onResetPassword={onResetPassword}
               />
             ))}
           </tbody>
@@ -458,6 +654,7 @@ export default function StaffOrdersPage() {
 
   const [accessState, setAccessState] = useState<AccessState>("checking");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [currentUserUid, setCurrentUserUid] = useState("");
   const [activeTab, setActiveTab] = useState<Tab>("orders");
   const [isLoadingOrders, setIsLoadingOrders] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
@@ -468,6 +665,7 @@ export default function StaffOrdersPage() {
   const [completed, setCompleted] = useState<StaffOrder[]>([]);
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<StaffOrder | null>(null);
+  const [showCreateUserModal, setShowCreateUserModal] = useState(false);
 
   const canLoadOrders = useMemo(() => accessState === "authorized", [accessState]);
 
@@ -525,18 +723,39 @@ export default function StaffOrdersPage() {
     }
   };
 
-  const handleUpdateUser = async (userId: string, updates: Partial<StaffUser>) => {
+  const handleUpdateUser = async (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => {
     try {
-      await updateUser({
-        userId,
-        firstName: updates.firstName,
-        lastName: updates.lastName,
+      await updateStaffUser({
+        uid,
+        displayName: updates.displayName,
         email: updates.email,
-        phone: updates.phone,
+        isAdmin: updates.isAdmin,
       });
       await loadUsers();
     } catch {
       setError(t("updateUserError"));
+    }
+  };
+
+  const handleCreateUser = async (input: CreateStaffUserInput) => {
+    await createStaffUser(input);
+    await loadUsers();
+  };
+
+  const handleDeleteUser = async (uid: string, email: string) => {
+    try {
+      await deleteStaffUser(uid);
+      await loadUsers();
+    } catch {
+      setError(t("deleteUserError"));
+    }
+  };
+
+  const handleResetPassword = async (uid: string) => {
+    try {
+      await resetStaffUserPassword(uid);
+    } catch {
+      setError(t("resetPasswordError"));
     }
   };
 
@@ -583,6 +802,7 @@ export default function StaffOrdersPage() {
           }
           
           setIsAdmin(admin);
+          setCurrentUserUid(user.uid);
           setAccessState("authorized");
         } catch {
           if (!mounted) {
@@ -804,17 +1024,29 @@ export default function StaffOrdersPage() {
         {/* Users Tab Content */}
         {activeTab === "users" && isAdmin && (
           <>
-            <div className="flex items-center gap-2 mb-4">
-              <Users className="w-5 h-5 text-green-600" />
-              <h2 className="text-2xl text-gray-900">{t("userManagement")}</h2>
-              <span className="text-sm text-gray-500">({users.length})</span>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-green-600" />
+                <h2 className="text-2xl text-gray-900">{t("userManagement")}</h2>
+                <span className="text-sm text-gray-500">({users.length})</span>
+              </div>
+              <button
+                onClick={() => setShowCreateUserModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+                {t("addStaffUser")}
+              </button>
             </div>
 
             <UsersTable
               users={users}
               locale={locale}
               t={t}
+              currentUserUid={currentUserUid}
               onUpdate={handleUpdateUser}
+              onDelete={handleDeleteUser}
+              onResetPassword={handleResetPassword}
               isLoading={isLoadingUsers}
             />
           </>
@@ -830,6 +1062,15 @@ export default function StaffOrdersPage() {
           onClose={() => setSelectedOrder(null)}
           onMarkCompleted={handleMarkCompleted}
           isMarking={isMarkingOrder}
+        />
+      )}
+
+      {/* Create Staff User Modal */}
+      {showCreateUserModal && (
+        <CreateStaffModal
+          t={t}
+          onClose={() => setShowCreateUserModal(false)}
+          onCreate={handleCreateUser}
         />
       )}
     </div>

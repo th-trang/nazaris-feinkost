@@ -66,23 +66,29 @@ export interface StaffOrdersResult {
 }
 
 export interface StaffUser {
-  id: string;
-  firstName: string;
-  lastName: string;
+  uid: string;
   email: string;
-  phone: string;
-  createdAt?: string;
-  type: string;
+  displayName: string | null;
+  isAdmin: boolean;
+  isStaff: boolean;
+  createdAt: string | null;
 }
 
 export interface StaffUsersResult {
   users: StaffUser[];
 }
 
-export interface UpdateUserInput {
-  userId: string;
-  firstName?: string;
-  lastName?: string;
+export interface CreateStaffUserInput {
+  email: string;
+  password: string;
+  displayName?: string;
+  isAdmin?: boolean;
+}
+
+export interface UpdateStaffUserInput {
+  uid: string;
+  displayName?: string;
   email?: string;
-  phone?: string;
+  isAdmin?: boolean;
+  isStaff?: boolean;
 }
