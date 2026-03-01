@@ -3,648 +3,20 @@
 import {useCallback, useEffect, useMemo, useState} from "react";
 import Link from "next/link";
 import {useParams, useRouter} from "next/navigation";
-import {
-  ClipboardList,
-  Lock,
-  LoaderCircle,
-  RefreshCw,
-  Users,
-  CheckCircle,
-  X,
-  Edit2,
-  Save,
-  XCircle,
-  Plus,
-  Trash2,
-  KeyRound,
-} from "lucide-react";
+import { ClipboardList, Lock, LoaderCircle, RefreshCw, Users, CheckCircle, Plus } from "lucide-react";
 import {useTranslations} from "next-intl";
 import {watchAuthUser, isStaffUser, isAdminUser} from "@/app/lib/firebase/auth";
 import {signOut} from "firebase/auth";
 import {getFirebaseAuth} from "@/app/lib/firebase/client";
 import {getStaffOrders, markOrderCompleted, getStaffUsers, updateStaffUser, createStaffUser, deleteStaffUser, resetStaffUserPassword} from "@/app/lib/firebase/orders";
 import {StaffOrder, StaffUser, CreateStaffUserInput} from "@/app/lib/orders/types";
+import UsersTable from "@/app/components/UserTable";
+import CreateStaffModal from "@/app/components/CreateStaffModal";
+import OrderDetailModal from "@/app/components/OrderDetailModal";
+import OrderCard from "@/app/components/OrderCard";
 
 type AccessState = "checking" | "unauthenticated" | "forbidden" | "authorized";
 type Tab = "orders" | "users";
-
-const toDateLabel = (date: string, locale: string): string => {
-  if (!date) {
-    return "-";
-  }
-
-  const parsed = new Date(`${date}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) {
-    return date;
-  }
-
-  return parsed.toLocaleDateString(locale === "de" ? "de-DE" : "en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-    weekday: "short",
-  });
-};
-
-const toCreatedAtLabel = (dateStr: string | undefined | null, locale: string): string => {
-  if (!dateStr) {
-    return "-";
-  }
-
-  const parsed = new Date(dateStr);
-  if (Number.isNaN(parsed.getTime())) {
-    return dateStr;
-  }
-
-  return parsed.toLocaleDateString(locale === "de" ? "de-DE" : "en-GB", {
-    year: "numeric",
-    month: "short",
-    day: "2-digit",
-  });
-};
-
-const toCurrency = (value: number, currency: string, locale: string): string => {
-  return new Intl.NumberFormat(locale === "de" ? "de-DE" : "en-GB", {
-    style: "currency",
-    currency: currency || "EUR",
-  }).format(value);
-};
-
-function OrderCard({
-  order,
-  locale,
-  t,
-  onSelect,
-}: {
-  order: StaffOrder;
-  locale: string;
-  t: ReturnType<typeof useTranslations>;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      onClick={onSelect}
-      className="w-full text-left bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-gray-100 hover:border-green-300 hover:shadow-xl transition-all cursor-pointer"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm text-gray-500">{t("orderNumber")}</p>
-          <p className="text-lg text-gray-900 font-semibold">{order.orderNumber || order.id}</p>
-        </div>
-        <span className={`px-3 py-1 rounded-full text-xs capitalize ${
-          order.status === "completed" 
-            ? "bg-green-100 text-green-700" 
-            : "bg-amber-100 text-amber-700"
-        }`}>
-          {order.status}
-        </span>
-      </div>
-
-      <div className="mt-4 grid sm:grid-cols-2 gap-4 text-sm">
-        <div>
-          <p className="text-gray-500">{t("customer")}</p>
-          <p className="text-gray-900">{order.customer.firstName} {order.customer.lastName}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500">{t("pickup")}</p>
-          <p className="text-gray-900">{toDateLabel(order.pickup.date, locale)}</p>
-          <p className="text-gray-700">{order.pickup.location}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500">{t("items")}</p>
-          <p className="text-gray-900">{order.items.length} {t("itemsCount")}</p>
-        </div>
-
-        <div>
-          <p className="text-gray-500">{t("total")}</p>
-          <p className="text-gray-900">{toCurrency(order.totals.subtotal, order.totals.currency, locale)}</p>
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function OrderDetailModal({
-  order,
-  locale,
-  t,
-  onClose,
-  onMarkCompleted,
-  isMarking,
-}: {
-  order: StaffOrder;
-  locale: string;
-  t: ReturnType<typeof useTranslations>;
-  onClose: () => void;
-  onMarkCompleted: () => void;
-  isMarking: boolean;
-}) {
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-        <div className="sticky top-0 bg-white border-b border-gray-100 p-5 flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              {t("orderDetails")}
-            </h2>
-            <p className="text-sm text-gray-500">{order.orderNumber}</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-
-        <div className="p-5 space-y-6">
-          {/* Customer Info */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">{t("customerInfo")}</h3>
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <p className="text-gray-900">
-                <span className="text-gray-500">{t("name")}:</span>{" "}
-                {order.customer.firstName} {order.customer.lastName}
-              </p>
-              <p className="text-gray-900">
-                <span className="text-gray-500">{t("email")}:</span>{" "}
-                {order.customer.email}
-              </p>
-              <p className="text-gray-900">
-                <span className="text-gray-500">{t("phone")}:</span>{" "}
-                {order.customer.phone}
-              </p>
-            </div>
-          </div>
-
-          {/* Pickup Info */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">{t("pickupInfo")}</h3>
-            <div className="bg-gray-50 rounded-xl p-4 space-y-2">
-              <p className="text-gray-900">
-                <span className="text-gray-500">{t("location")}:</span>{" "}
-                {order.pickup.location}
-              </p>
-              <p className="text-gray-900">
-                <span className="text-gray-500">{t("date")}:</span>{" "}
-                {toDateLabel(order.pickup.date, locale)}
-              </p>
-            </div>
-          </div>
-
-          {/* Order Items */}
-          <div>
-            <h3 className="text-sm font-medium text-gray-500 mb-2">{t("orderItems")}</h3>
-            <div className="bg-gray-50 rounded-xl overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">{t("itemName")}</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">{t("quantity")}</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-gray-500">{t("weight")}</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {order.items.map((item, index) => (
-                    <tr key={index}>
-                      <td className="px-4 py-3 text-sm text-gray-900">{item.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.quantity}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {item.weightInGrams ? `${item.weightInGrams}g` : "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Total */}
-          <div className="flex justify-between items-center bg-green-50 rounded-xl p-4">
-            <span className="font-medium text-gray-700">{t("total")}</span>
-            <span className="text-xl font-semibold text-green-700">
-              {toCurrency(order.totals.subtotal, order.totals.currency, locale)}
-            </span>
-          </div>
-
-          {/* Mark Complete Button */}
-          {order.status !== "completed" && (
-            <button
-              onClick={onMarkCompleted}
-              disabled={isMarking}
-              className="w-full py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-            >
-              {isMarking ? (
-                <>
-                  <LoaderCircle className="w-5 h-5 animate-spin" />
-                  {t("marking")}
-                </>
-              ) : (
-                <>
-                  <CheckCircle className="w-5 h-5" />
-                  {t("markCompleted")}
-                </>
-              )}
-            </button>
-          )}
-
-          {order.status === "completed" && (
-            <div className="flex items-center justify-center gap-2 py-3 bg-green-100 text-green-700 rounded-xl">
-              <CheckCircle className="w-5 h-5" />
-              {t("orderCompleted")}
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function UserRow({
-  user,
-  locale,
-  t,
-  currentUserUid,
-  onUpdate,
-  onDelete,
-  onResetPassword,
-}: {
-  user: StaffUser;
-  locale: string;
-  t: ReturnType<typeof useTranslations>;
-  currentUserUid: string;
-  onUpdate: (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => Promise<void>;
-  onDelete: (uid: string, email: string) => Promise<void>;
-  onResetPassword: (uid: string) => Promise<void>;
-}) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [isResettingPassword, setIsResettingPassword] = useState(false);
-  const [displayName, setDisplayName] = useState(user.displayName || "");
-  const [email, setEmail] = useState(user.email);
-  const [isAdmin, setIsAdmin] = useState(user.isAdmin);
-
-  const handleDelete = async () => {
-    if (!confirm(t("confirmDeleteUser", { email: user.email }))) return;
-    setIsDeleting(true);
-    try {
-      await onDelete(user.uid, user.email);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
-  const handleResetPassword = async () => {
-    if (!confirm(t("confirmResetPassword", { email: user.email }))) return;
-    setIsResettingPassword(true);
-    try {
-      await onResetPassword(user.uid);
-      alert(t("passwordResetSent", { email: user.email }));
-    } finally {
-      setIsResettingPassword(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await onUpdate(user.uid, {displayName, email, isAdmin});
-      setIsEditing(false);
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleCancel = () => {
-    setDisplayName(user.displayName || "");
-    setEmail(user.email);
-    setIsAdmin(user.isAdmin);
-    setIsEditing(false);
-  };
-
-  if (isEditing) {
-    return (
-      <tr className="bg-blue-50">
-        <td className="px-4 py-3">
-          <input
-            type="text"
-            value={displayName}
-            onChange={(e) => setDisplayName(e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm"
-            placeholder={t("displayName")}
-          />
-        </td>
-        <td className="px-4 py-3">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full px-2 py-1 border border-gray-300 rounded-lg text-sm"
-            placeholder={t("email")}
-          />
-        </td>
-        <td className="px-4 py-3 text-sm text-gray-600">
-          {toCreatedAtLabel(user.createdAt, locale)}
-        </td>
-        <td className="px-4 py-3">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isAdmin}
-              onChange={(e) => setIsAdmin(e.target.checked)}
-              className="rounded border-gray-300"
-            />
-            <span className="text-sm text-gray-700">{t("admin")}</span>
-          </label>
-        </td>
-        <td className="px-4 py-3">
-          <div className="flex gap-2 justify-end">
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60"
-            >
-              {isSaving ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            </button>
-            <button
-              onClick={handleCancel}
-              disabled={isSaving}
-              className="p-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
-            >
-              <XCircle className="w-4 h-4" />
-            </button>
-          </div>
-        </td>
-      </tr>
-    );
-  }
-
-  return (
-    <tr className="hover:bg-gray-50">
-      <td className="px-4 py-3 text-sm text-gray-900">
-        {user.displayName || "-"}
-      </td>
-      <td className="px-4 py-3 text-sm text-gray-900">{user.email}</td>
-      <td className="px-4 py-3 text-sm text-gray-600">
-        {toCreatedAtLabel(user.createdAt, locale)}
-      </td>
-      <td className="px-4 py-3">
-        <div className="flex gap-2">
-          {user.isAdmin && (
-            <span className="px-2 py-1 text-xs rounded-full bg-purple-100 text-purple-700">
-              {t("admin")}
-            </span>
-          )}
-          {user.isStaff && (
-            <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
-              {t("staff")}
-            </span>
-          )}
-        </div>
-      </td>
-      <td className="px-4 py-3 text-right">
-        <div className="flex gap-1 justify-end">
-          <button
-            onClick={() => setIsEditing(true)}
-            className="p-2 text-gray-500 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
-            title={t("edit")}
-          >
-            <Edit2 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={handleResetPassword}
-            disabled={isResettingPassword}
-            className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-60"
-            title={t("resetPassword")}
-          >
-            {isResettingPassword ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
-          </button>
-          {user.uid !== currentUserUid && (
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-60"
-              title={t("deleteUser")}
-            >
-              {isDeleting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-            </button>
-          )}
-        </div>
-      </td>
-    </tr>
-  );
-}
-
-function CreateStaffModal({
-  t,
-  onClose,
-  onCreate,
-}: {
-  t: ReturnType<typeof useTranslations>;
-  onClose: () => void;
-  onCreate: (input: CreateStaffUserInput) => Promise<void>;
-}) {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-
-    if (!email.trim() || !password.trim()) {
-      setError(t("emailPasswordRequired"));
-      return;
-    }
-
-    if (password.length < 6) {
-      setError(t("passwordTooShort"));
-      return;
-    }
-
-    setIsCreating(true);
-    try {
-      await onCreate({
-        email: email.trim(),
-        password,
-        displayName: displayName.trim() || undefined,
-        isAdmin,
-      });
-      onClose();
-    } catch {
-      setError(t("createUserError"));
-    } finally {
-      setIsCreating(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl max-w-md w-full shadow-2xl">
-        <div className="border-b border-gray-100 p-5 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-gray-900">{t("addStaffUser")}</h2>
-          <button
-            onClick={onClose}
-            className="p-2 rounded-xl hover:bg-gray-100 transition-colors"
-          >
-            <X className="w-5 h-5 text-gray-500" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="p-5 space-y-4">
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">{t("email")} *</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">{t("password")} *</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              required
-              minLength={6}
-            />
-            <p className="text-xs text-gray-500 mt-1">{t("minPassword")}</p>
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-700 mb-1">{t("displayName")}</label>
-            <input
-              type="text"
-              value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
-          </div>
-
-          <div>
-            <label className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                checked={isAdmin}
-                onChange={(e) => setIsAdmin(e.target.checked)}
-                className="rounded border-gray-300"
-              />
-              <span className="text-sm text-gray-700">{t("makeAdmin")}</span>
-            </label>
-          </div>
-
-          {error && (
-            <p className="text-sm text-red-600">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isCreating}
-            className="w-full py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {isCreating ? (
-              <>
-                <LoaderCircle className="w-5 h-5 animate-spin" />
-                {t("creating")}
-              </>
-            ) : (
-              t("createUser")
-            )}
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-}
-
-function UsersTable({
-  users,
-  locale,
-  t,
-  currentUserUid,
-  onUpdate,
-  onDelete,
-  onResetPassword,
-  isLoading,
-}: {
-  users: StaffUser[];
-  locale: string;
-  t: ReturnType<typeof useTranslations>;
-  currentUserUid: string;
-  onUpdate: (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => Promise<void>;
-  onDelete: (uid: string, email: string) => Promise<void>;
-  onResetPassword: (uid: string) => Promise<void>;
-  isLoading: boolean;
-}) {
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoaderCircle className="w-8 h-8 animate-spin text-green-600" />
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="p-8 text-center text-gray-500">
-        {t("noUsers")}
-      </div>
-    );
-  }
-
-  return (
-    <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-gray-50 border-b border-gray-200">
-            <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("displayName")}
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("email")}
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("createdAt")}
-              </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("role")}
-              </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t("actions")}
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200">
-            {users.map((user) => (
-              <UserRow
-                key={user.uid}
-                user={user}
-                locale={locale}
-                t={t}
-                currentUserUid={currentUserUid}
-                onUpdate={onUpdate}
-                onDelete={onDelete}
-                onResetPassword={onResetPassword}
-              />
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
 
 export default function StaffOrdersPage() {
   const t = useTranslations("staffOrders");
@@ -670,9 +42,7 @@ export default function StaffOrdersPage() {
   const canLoadOrders = useMemo(() => accessState === "authorized", [accessState]);
 
   const loadOrders = useCallback(async () => {
-    if (!canLoadOrders) {
-      return;
-    }
+    if (!canLoadOrders) return;
 
     setIsLoadingOrders(true);
     setError(null);
@@ -689,9 +59,8 @@ export default function StaffOrdersPage() {
   }, [canLoadOrders, t]);
 
   const loadUsers = useCallback(async () => {
-    if (!canLoadOrders || !isAdmin) {
-      return;
-    }
+    if (!canLoadOrders || !isAdmin) return;
+    
 
     setIsLoadingUsers(true);
     setError(null);
@@ -707,9 +76,7 @@ export default function StaffOrdersPage() {
   }, [canLoadOrders, isAdmin, t]);
 
   const handleMarkCompleted = async () => {
-    if (!selectedOrder) {
-      return;
-    }
+    if (!selectedOrder) return;
 
     setIsMarkingOrder(true);
     try {
@@ -776,9 +143,7 @@ export default function StaffOrdersPage() {
 
     const unsubscribe = watchAuthUser((user) => {
       void (async () => {
-        if (!mounted) {
-          return;
-        }
+        if (!mounted) return;
 
         if (!user) {
           setAccessState("unauthenticated");
@@ -787,9 +152,7 @@ export default function StaffOrdersPage() {
 
         try {
           const staff = await isStaffUser(user);
-          if (!mounted) {
-            return;
-          }
+          if (!mounted) return;
           
           if (!staff) {
             setAccessState("forbidden");
@@ -820,17 +183,14 @@ export default function StaffOrdersPage() {
   }, []);
 
   useEffect(() => {
-    if (accessState !== "authorized") {
-      return;
-    }
+    if (accessState !== "authorized") return;
+
 
     void loadOrders();
   }, [accessState, loadOrders]);
 
   useEffect(() => {
-    if (accessState !== "authorized" || !isAdmin || activeTab !== "users") {
-      return;
-    }
+    if (accessState !== "authorized" || !isAdmin || activeTab !== "users") return;
 
     void loadUsers();
   }, [accessState, isAdmin, activeTab, loadUsers]);
