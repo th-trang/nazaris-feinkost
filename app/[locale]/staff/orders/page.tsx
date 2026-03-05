@@ -10,6 +10,7 @@ import {signOut} from "firebase/auth";
 import {getFirebaseAuth} from "@/app/lib/firebase/client";
 import {getStaffOrders, markOrderCompleted, getStaffUsers, updateStaffUser, createStaffUser, deleteStaffUser, resetStaffUserPassword} from "@/app/lib/firebase/orders";
 import {StaffOrder, StaffUser, CreateStaffUserInput} from "@/app/lib/orders/types";
+import {locations} from "@/app/data/LocationList";
 import UsersTable from "@/app/components/UserTable";
 import CreateStaffModal from "@/app/components/CreateStaffModal";
 import OrderDetailModal from "@/app/components/OrderDetailModal";
@@ -38,8 +39,19 @@ export default function StaffOrdersPage() {
   const [users, setUsers] = useState<StaffUser[]>([]);
   const [selectedOrder, setSelectedOrder] = useState<StaffOrder | null>(null);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState<string>("all");
 
   const canLoadOrders = useMemo(() => accessState === "authorized", [accessState]);
+
+  const filteredUncompleted = useMemo(() => {
+    if (selectedLocation === "all") return uncompleted;
+    return uncompleted.filter(order => order.pickup.location === selectedLocation);
+  }, [uncompleted, selectedLocation]);
+
+  const filteredCompleted = useMemo(() => {
+    if (selectedLocation === "all") return completed;
+    return completed.filter(order => order.pickup.location === selectedLocation);
+  }, [completed, selectedLocation]);
 
   const loadOrders = useCallback(async () => {
     if (!canLoadOrders) return;
@@ -325,21 +337,41 @@ export default function StaffOrdersPage() {
               </div>
             )}
 
+            {/* Location Filter */}
+            <div className="mb-6 flex items-center gap-3">
+              <label htmlFor="location-filter" className="text-sm font-medium text-gray-700">
+                {t("filterByLocation")}
+              </label>
+              <select
+                id="location-filter"
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+              >
+                <option value="all">{t("allLocations")}</option>
+                {locations.map((location) => (
+                  <option key={location.name} value={location.name}>
+                    {location.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid lg:grid-cols-2 gap-8">
               <section>
                 <div className="flex items-center gap-2 mb-4">
                   <ClipboardList className="w-5 h-5 text-amber-600" />
                   <h2 className="text-2xl text-gray-900">{t("uncompleted")}</h2>
-                  <span className="text-sm text-gray-500">({uncompleted.length})</span>
+                  <span className="text-sm text-gray-500">({filteredUncompleted.length})</span>
                 </div>
 
                 <div className="space-y-4">
-                  {uncompleted.length === 0 ? (
+                  {filteredUncompleted.length === 0 ? (
                     <div className="p-5 rounded-xl bg-white/70 border border-gray-200 text-gray-600 text-sm">
                       {t("noUncompleted")}
                     </div>
                   ) : (
-                    uncompleted.map((order) => (
+                    filteredUncompleted.map((order) => (
                       <OrderCard
                         key={order.id}
                         order={order}
@@ -356,16 +388,16 @@ export default function StaffOrdersPage() {
                 <div className="flex items-center gap-2 mb-4">
                   <CheckCircle className="w-5 h-5 text-green-600" />
                   <h2 className="text-2xl text-gray-900">{t("completed")}</h2>
-                  <span className="text-sm text-gray-500">({completed.length})</span>
+                  <span className="text-sm text-gray-500">({filteredCompleted.length})</span>
                 </div>
 
                 <div className="space-y-4">
-                  {completed.length === 0 ? (
+                  {filteredCompleted.length === 0 ? (
                     <div className="p-5 rounded-xl bg-white/70 border border-gray-200 text-gray-600 text-sm">
                       {t("noCompleted")}
                     </div>
                   ) : (
-                    completed.map((order) => (
+                    filteredCompleted.map((order) => (
                       <OrderCard
                         key={order.id}
                         order={order}

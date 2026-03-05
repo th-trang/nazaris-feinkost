@@ -247,7 +247,9 @@
     "confirmResetPassword": "Passwort-Reset-E-Mail an {email} senden?",
     "passwordResetSent": "Passwort-Reset-E-Mail wurde an {email} gesendet",
     "deleteUserError": "Benutzer konnte nicht gelöscht werden. Bitte erneut versuchen.",
-    "resetPasswordError": "Passwort-Reset-E-Mail konnte nicht gesendet werden. Bitte erneut versuchen."
+    "resetPasswordError": "Passwort-Reset-E-Mail konnte nicht gesendet werden. Bitte erneut versuchen.",
+    "filterByLocation": "Nach Standort filtern",
+    "allLocations": "Alle Standorte"
   },
   "staffLogin": {
     "title": "Mitarbeiter-Login",

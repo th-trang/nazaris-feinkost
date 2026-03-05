@@ -33,6 +33,8 @@ serviceAccount*.json
 *-service-account*.json
 functions/.runtimeconfig.json
 functions/.secret.local
+functions/.env
+functions/.secret.local
 
 # vercel
 .vercel

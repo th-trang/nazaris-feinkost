@@ -1,12 +1,17 @@
 import {FieldValue, getFirestore} from "firebase-admin/firestore";
 import {createHash} from "node:crypto";
 import {onCall} from "firebase-functions/v2/https";
+import {defineSecret} from "firebase-functions/params";
 import {locationCatalog} from "../locationCatalog.js";
 import {assertValidCreateOrderPayload, roundCurrency} from "../lib/validation.js";
+
+const telegramBotToken = defineSecret("TELEGRAM_BOT_TOKEN");
+const telegramChatId = defineSecret("TELEGRAM_CHAT_ID");
 
 const FUNCTION_OPTIONS = {
 	region: "europe-west3",
 	invoker: "public" as const,
+	secrets: [telegramBotToken, telegramChatId],
 };
 
 const toGuestUserId = (email: string): string => {
@@ -20,6 +25,43 @@ const locationIdByName = new Map(
 
 const getPickupLocationId = (pickupLocation: string): string =>
 	locationIdByName.get(pickupLocation.trim().toLowerCase()) ?? "custom";
+
+const sendTelegramNotification = async (message: string): Promise<void> => {
+	const TELEGRAM_BOT_TOKEN = telegramBotToken.value();
+	const TELEGRAM_CHAT_ID = telegramChatId.value();
+	if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+		console.warn(
+			"Telegram notification skipped: TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID not configured.",
+		);
+		return;
+	}
+
+	try {
+		const response = await fetch(
+			`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`,
+			{
+				method: "POST",
+				headers: {"Content-Type": "application/json"},
+				body: JSON.stringify({
+					chat_id: TELEGRAM_CHAT_ID,
+					text: message,
+					parse_mode: "HTML",
+				}),
+			},
+		);
+
+		if (!response.ok) {
+			const errorText = await response.text().catch(() => "");
+			console.error(
+				"Failed to send Telegram notification",
+				response.status,
+				errorText,
+			);
+		}
+	} catch (error) {
+		console.error("Error while sending Telegram notification", error);
+	}
+};
 
 export const createOrder = onCall(FUNCTION_OPTIONS, async (request) => {
 	const payload = assertValidCreateOrderPayload(request.data);
@@ -122,6 +164,27 @@ export const createOrder = onCall(FUNCTION_OPTIONS, async (request) => {
 		createdAt: FieldValue.serverTimestamp(),
 		updatedAt: FieldValue.serverTimestamp(),
 	});
+
+	const notificationLines = [
+		`Neue Bestellung ${orderNumber}`,
+		`Name: ${payload.firstName} ${payload.lastName}`,
+		`E-Mail: ${payload.email}`,
+		`Telefon: ${payload.phone}`,
+		`Abholdatum: ${payload.pickupDate}`,
+		`Abholort: ${payload.pickupLocation}`,
+		`Zahlungsmethode: ${payload.paymentMethod === "paypal" ? "PayPal" : "Karte"}`,
+		`Summe: ${subtotal.toFixed(2)} EUR`,
+		"",
+		"Artikel:",
+		...payload.items.map(
+			(item) =>
+				`- ${item.quantity}x ${item.name} (${item.unitPrice.toFixed(2)} EUR${
+					item.weightInGrams ? `, ${item.weightInGrams} g` : ""
+				})`,
+		),
+	];
+
+	await sendTelegramNotification(notificationLines.join("\n"));
 
 	return {
 		orderId: orderRef.id,

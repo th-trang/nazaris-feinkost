@@ -247,7 +247,9 @@
     "confirmResetPassword": "Send a password reset email to {email}?",
     "passwordResetSent": "Password reset email sent to {email}",
     "deleteUserError": "Could not delete user. Please try again.",
-    "resetPasswordError": "Could not send password reset email. Please try again."
+    "resetPasswordError": "Could not send password reset email. Please try again.",
+    "filterByLocation": "Filter by Location",
+    "allLocations": "All Locations"
   },
   "staffLogin": {
     "title": "Staff Login",

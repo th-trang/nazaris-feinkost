@@ -10,3 +10,4 @@ export {createOrder} from "./handlers/createOrder.js";
 export {setStaffClaim} from "./handlers/setStaffClaim.js";
 export {syncLocationsCatalog} from "./handlers/syncLocationsCatalog.js";
 export {listStaffUsers, createStaffUser, updateStaffUser, deleteStaffUser, resetStaffUserPassword} from "./handlers/staffUsers.js";
+export {notifyUpcomingOrders, triggerUpcomingOrdersDigest} from "./handlers/notifyUpcomingOrders.js";

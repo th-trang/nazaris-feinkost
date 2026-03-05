@@ -246,7 +246,7 @@ export function useCheckout() {
       clearCart();
       setTimeout(() => {
         router.push("/");
-      }, 2000);
+      }, 6000);
     } catch {
       setSubmitError(t("orderFailed"));
     } finally {
