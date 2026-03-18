@@ -152,6 +152,7 @@
     "invalidName": "Name cannot contain special characters (§$%&/?*+°^><)",
     "requiredField": "This field is required",
     "orderFailed": "Your order could not be submitted. Please try again.",
+    "stripePaymentCancelled": "Payment was cancelled. Please try again.",
     "pickup": "Pickup",
     "pickupDate": "Pickup Date",
     "selectedDay": "Selected day",

@@ -18,6 +18,7 @@ export default function CheckoutPage() {
     orderNumber,
     cartItems,
     cartTotal,
+    isStripeReturnRedirect,
     availableLocations,
     selectedDayName,
     selectedLocation,
@@ -30,7 +31,7 @@ export default function CheckoutPage() {
   } = useCheckout();
 
   // Show nothing while redirecting
-  if (cartItems.length === 0 && !isSubmitted) {
+  if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
     return null;
   }
 

@@ -130,6 +130,9 @@ export const assertValidCreateOrderPayload = (
 		if (weightInGrams !== undefined) {
 			result.weightInGrams = weightInGrams;
 		}
+		if (typeof parsedItem.imageUrl === "string" && parsedItem.imageUrl) {
+			result.imageUrl = parsedItem.imageUrl;
+		}
 		return result;
 	});
 

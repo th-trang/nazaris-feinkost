@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useTranslations } from "next-intl";
 import { getDayName, getLocationsForDate } from "@/app/data/LocationList";
@@ -48,6 +48,8 @@ export const validateName = (name: string): boolean => {
 export function useCheckout() {
   const t = useTranslations("checkout");
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const params = useParams<{ locale?: string }>();
 
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -80,12 +82,39 @@ export function useCheckout() {
     (l) => l.name === formData.pickupLocation,
   );
 
+  const stripeStatus = searchParams.get("stripe");
+  const returnedOrderNumber = searchParams.get("orderNumber");
+  const isStripeSuccessRedirect = stripeStatus === "success";
+  const isStripeCancelledRedirect = stripeStatus === "cancelled";
+  const isStripeReturnRedirect = isStripeSuccessRedirect || isStripeCancelledRedirect;
+
   // Redirect if cart is empty and not submitted
   useEffect(() => {
-    if (cartItems.length === 0 && !isSubmitted) {
+    if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
       router.push("/menu");
     }
-  }, [cartItems.length, isSubmitted, router]);
+  }, [cartItems.length, isSubmitted, isStripeReturnRedirect, router]);
+
+  useEffect(() => {
+    if (!isSubmitted && isStripeSuccessRedirect && returnedOrderNumber) {
+      setOrderNumber(returnedOrderNumber);
+      setIsSubmitted(true);
+      setSubmitError(null);
+      clearCart();
+      return;
+    }
+
+    if (!isSubmitted && stripeStatus === "cancelled") {
+      setSubmitError(t("stripePaymentCancelled"));
+    }
+  }, [
+    clearCart,
+    isStripeSuccessRedirect,
+    isSubmitted,
+    returnedOrderNumber,
+    stripeStatus,
+    t,
+  ]);
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -235,12 +264,45 @@ export function useCheckout() {
         quantity: item.quantity,
         unitPrice: item.price,
         ...(item.weightInGrams != null && { weightInGrams: item.weightInGrams }),
+        ...(item.image && { imageUrl: item.image }),
       })),
     };
 
     try {
       setIsSubmitting(true);
       const result = await createOrder(payload);
+
+      if (payload.paymentMethod === "card") {
+        const localeParam = Array.isArray(params.locale)
+          ? params.locale[0]
+          : params.locale;
+
+        const checkoutResponse = await fetch("/api/stripe/checkout-session", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            orderNumber: result.orderNumber,
+            email: payload.email,
+            locale: localeParam,
+            items: payload.items,
+          }),
+        });
+
+        if (!checkoutResponse.ok) {
+          throw new Error("Failed to create Stripe checkout session");
+        }
+
+        const checkoutData = (await checkoutResponse.json()) as {url?: string};
+        if (!checkoutData.url) {
+          throw new Error("Stripe checkout URL missing");
+        }
+
+        window.location.assign(checkoutData.url);
+        return;
+      }
+
       setOrderNumber(result.orderNumber);
       setIsSubmitted(true);
       clearCart();
@@ -264,6 +326,7 @@ export function useCheckout() {
     orderNumber,
     cartItems,
     cartTotal,
+    isStripeReturnRedirect,
     availableLocations,
     selectedDayName,
     selectedLocation,

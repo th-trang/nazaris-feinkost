@@ -19,7 +19,8 @@
     "next": "16.1.6",
     "next-intl": "^4.8.2",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.3",
+    "stripe": "^18.5.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

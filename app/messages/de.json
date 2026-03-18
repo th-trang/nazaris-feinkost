@@ -152,6 +152,7 @@
     "invalidName": "Name darf keine Sonderzeichen enthalten (§$%&/?*+°^><)",
     "requiredField": "Dieses Feld ist erforderlich",
     "orderFailed": "Ihre Bestellung konnte nicht übermittelt werden. Bitte versuchen Sie es erneut.",
+    "stripePaymentCancelled": "Die Zahlung wurde abgebrochen. Bitte versuchen Sie es erneut.",
     "pickup": "Abholung",
     "pickupDate": "Abholdatum",
     "selectedDay": "Ausgewählter Tag",

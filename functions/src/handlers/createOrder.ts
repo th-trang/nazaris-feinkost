@@ -4,6 +4,7 @@ import {onCall} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
 import {locationCatalog} from "../locationCatalog.js";
 import {assertValidCreateOrderPayload, roundCurrency} from "../lib/validation.js";
+import {sendOrderConfirmationEmail, emailSecrets} from "../lib/email.js";
 
 const telegramBotToken = defineSecret("TELEGRAM_BOT_TOKEN");
 const telegramChatId = defineSecret("TELEGRAM_CHAT_ID");
@@ -11,7 +12,7 @@ const telegramChatId = defineSecret("TELEGRAM_CHAT_ID");
 const FUNCTION_OPTIONS = {
 	region: "europe-west3",
 	invoker: "public" as const,
-	secrets: [telegramBotToken, telegramChatId],
+	secrets: [telegramBotToken, telegramChatId, ...emailSecrets],
 };
 
 const toGuestUserId = (email: string): string => {
@@ -185,6 +186,8 @@ export const createOrder = onCall(FUNCTION_OPTIONS, async (request) => {
 	];
 
 	await sendTelegramNotification(notificationLines.join("\n"));
+
+	await sendOrderConfirmationEmail({orderNumber, payload, subtotal});
 
 	return {
 		orderId: orderRef.id,

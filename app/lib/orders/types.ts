@@ -6,6 +6,7 @@ export interface OrderItemInput {
   quantity: number;
   unitPrice: number;
   weightInGrams?: number;
+  imageUrl?: string;
 }
 
 export interface CreateOrderInput {
