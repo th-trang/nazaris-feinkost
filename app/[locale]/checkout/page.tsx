@@ -1,13 +1,20 @@
 "use client";
 
-import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
+import { useCart } from "@/app/context/CartContext";
+import StripeProvider from "@/app/components/StripeProvider";
 import { useCheckout } from "./useCheckout";
 import { getHoursForDay } from "@/app/data/LocationList";
 import DatePicker from "@/app/components/DatePicker";
 import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
 import InputField from "@/app/components/InputField";
 
-export default function CheckoutPage() {
+function CheckoutForm({ paymentIntentId }: { paymentIntentId: string | null }) {
+  const stripe = useStripe();
+  const elements = useElements();
   const {
     t,
     formData,
@@ -28,7 +35,7 @@ export default function CheckoutPage() {
     handleChange,
     handleSubmit,
     setPickupDate,
-  } = useCheckout();
+  } = useCheckout(stripe, elements, paymentIntentId);
 
   // Show nothing while redirecting
   if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
@@ -269,7 +276,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
 
-              {/* Payment Method */}
+              {/* Payment Method – Stripe Payment Element */}
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100">
                 <div className="flex items-center space-x-3 mb-6">
                   <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
@@ -278,32 +285,19 @@ export default function CheckoutPage() {
                   <h2 className="text-2xl text-gray-900">{t('paymentMethod')}</h2>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-green-500 transition-colors">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="card"
-                      checked={formData.paymentMethod === "card"}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-green-600"
-                    />
-                    <span className="ml-3 text-gray-900">{t('creditCard')}</span>
-                  </label>
-
-                  <label className="flex items-center p-4 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-green-500 transition-colors">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="paypal"
-                      checked={formData.paymentMethod === "paypal"}
-                      onChange={handleChange}
-                      className="w-4 h-4 text-green-600"
-                    />
-                    <span className="ml-3 text-gray-900">PayPal</span>
-                  </label>
-
-                </div>
+                {/* Customise the Payment Element layout via the `layout` option.
+                    Supported types: "accordion" | "tabs" | "auto"
+                    @see https://docs.stripe.com/elements/payment-element#layout */}
+                <PaymentElement
+                  options={{
+                    layout: {
+                      type: "accordion",
+                      defaultCollapsed: false,
+                      radios: true,
+                      spacedAccordionItems: true,
+                    },
+                  }}
+                />
               </div>
             </div>
 
@@ -345,8 +339,8 @@ export default function CheckoutPage() {
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
-                  className="w-full mt-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-lg hover:shadow-xl"
+                  disabled={isSubmitting || !stripe || !elements}
+                  className="w-full mt-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? t('placeOrderProcessing') : t('placeOrder')}
                 </button>
@@ -364,5 +358,93 @@ export default function CheckoutPage() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  const { cartItems, cartTotal } = useCart();
+  const searchParams = useSearchParams();
+  const params = useParams<{ locale?: string }>();
+  const router = useRouter();
+  const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [initError, setInitError] = useState<string | null>(null);
+
+  const redirectStatus = searchParams.get("redirect_status");
+  const returnClientSecret = searchParams.get("payment_intent_client_secret");
+  const oldStripeStatus = searchParams.get("stripe");
+  const isStripeReturn = !!redirectStatus || !!oldStripeStatus;
+
+  useEffect(() => {
+    if (returnClientSecret) {
+      setClientSecret(returnClientSecret);
+      return;
+    }
+
+    if (cartTotal <= 0) return;
+
+    const controller = new AbortController();
+
+    fetch("/api/stripe/create-payment-intent", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ amount: cartTotal }),
+      signal: controller.signal,
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.clientSecret) {
+          setClientSecret(data.clientSecret);
+          if (data.paymentIntentId) {
+            setPaymentIntentId(data.paymentIntentId);
+          }
+        } else {
+          setInitError(data.error || "Failed to initialize payment.");
+        }
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          setInitError("Failed to initialize payment.");
+        }
+      });
+
+    return () => controller.abort();
+  }, [cartTotal, returnClientSecret]);
+
+  useEffect(() => {
+    if (cartItems.length === 0 && !isStripeReturn) {
+      router.push("/menu");
+    }
+  }, [cartItems.length, isStripeReturn, router]);
+
+  if (cartItems.length === 0 && !isStripeReturn) return null;
+
+  if (initError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-20 px-4">
+        <p className="text-red-600">{initError}</p>
+      </div>
+    );
+  }
+
+  if (!clientSecret) {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-20 px-4">
+        <div className="flex items-center gap-3 text-gray-500">
+          <Loader2 className="w-5 h-5 animate-spin" />
+        </div>
+      </div>
+    );
+  }
+
+  const locale =
+    (Array.isArray(params.locale) ? params.locale[0] : params.locale) === "en"
+      ? "en"
+      : "de";
+
+  return (
+    <StripeProvider clientSecret={clientSecret} locale={locale}>
+      <CheckoutForm paymentIntentId={paymentIntentId} />
+    </StripeProvider>
   );
 }

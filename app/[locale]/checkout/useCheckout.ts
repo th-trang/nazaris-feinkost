@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { getDayName, getLocationsForDate } from "@/app/data/LocationList";
 import { createOrder } from "@/app/lib/firebase/orders";
 import { CreateOrderInput } from "@/app/lib/orders/types";
+import type { Stripe, StripeElements } from "@stripe/stripe-js";
 
 export interface CheckoutFormData {
   firstName: string;
@@ -45,7 +46,11 @@ export const validateName = (name: string): boolean => {
   return !invalidCharsRegex.test(name);
 };
 
-export function useCheckout() {
+export function useCheckout(
+  stripe: Stripe | null,
+  elements: StripeElements | null,
+  paymentIntentId: string | null,
+) {
   const t = useTranslations("checkout");
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -83,9 +88,10 @@ export function useCheckout() {
   );
 
   const stripeStatus = searchParams.get("stripe");
+  const redirectStatus = searchParams.get("redirect_status");
   const returnedOrderNumber = searchParams.get("orderNumber");
-  const isStripeSuccessRedirect = stripeStatus === "success";
-  const isStripeCancelledRedirect = stripeStatus === "cancelled";
+  const isStripeSuccessRedirect = stripeStatus === "success" || redirectStatus === "succeeded";
+  const isStripeCancelledRedirect = stripeStatus === "cancelled" || redirectStatus === "failed";
   const isStripeReturnRedirect = isStripeSuccessRedirect || isStripeCancelledRedirect;
 
   // Redirect if cart is empty and not submitted
@@ -104,15 +110,15 @@ export function useCheckout() {
       return;
     }
 
-    if (!isSubmitted && stripeStatus === "cancelled") {
+    if (!isSubmitted && isStripeCancelledRedirect) {
       setSubmitError(t("stripePaymentCancelled"));
     }
   }, [
     clearCart,
     isStripeSuccessRedirect,
+    isStripeCancelledRedirect,
     isSubmitted,
     returnedOrderNumber,
-    stripeStatus,
     t,
   ]);
 
@@ -210,6 +216,7 @@ export function useCheckout() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!stripe || !elements) return;
     setSubmitError(null);
 
     // Validate before submission
@@ -272,34 +279,31 @@ export function useCheckout() {
       setIsSubmitting(true);
       const result = await createOrder(payload);
 
-      if (payload.paymentMethod === "card") {
-        const localeParam = Array.isArray(params.locale)
-          ? params.locale[0]
-          : params.locale;
+      // Attach order number to PaymentIntent so the webhook can match it
+      await fetch("/api/stripe/create-payment-intent", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentIntentId: paymentIntentId,
+          orderNumber: result.orderNumber,
+        }),
+      });
 
-        const checkoutResponse = await fetch("/api/stripe/checkout-session", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            orderNumber: result.orderNumber,
-            email: payload.email,
-            locale: localeParam,
-            items: payload.items,
-          }),
-        });
+      const origin = window.location.origin;
+      const localeParam = Array.isArray(params.locale)
+        ? params.locale[0]
+        : params.locale;
 
-        if (!checkoutResponse.ok) {
-          throw new Error("Failed to create Stripe checkout session");
-        }
+      const { error } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${origin}/${localeParam}/checkout?orderNumber=${encodeURIComponent(result.orderNumber)}`,
+        },
+        redirect: "if_required",
+      });
 
-        const checkoutData = (await checkoutResponse.json()) as {url?: string};
-        if (!checkoutData.url) {
-          throw new Error("Stripe checkout URL missing");
-        }
-
-        window.location.assign(checkoutData.url);
+      if (error) {
+        setSubmitError(error.message || t("orderFailed"));
         return;
       }
 
