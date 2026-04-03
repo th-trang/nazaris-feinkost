@@ -97,7 +97,7 @@ export function useCheckout(
   // Redirect if cart is empty and not submitted
   useEffect(() => {
     if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
-      router.push("/menu");
+      router.push("/products");
     }
   }, [cartItems.length, isSubmitted, isStripeReturnRedirect, router]);
 
