@@ -163,7 +163,11 @@
     "address": "Address",
     "specialRequests": "Special Requests (Optional)",
     "specialRequestsPlaceholder": "e.g. Special packaging, pickup time, etc.",
-    "pickupOn": "on"
+    "pickupOn": "on",
+    "sessionExpired": "Session Expired",
+    "sessionExpiredMessage": "Your payment session has expired. Please reload the page to try again.",
+    "tryAgain": "Try Again",
+    "sessionCountdown": "Time remaining: {time}"
   },
   "cart": {
     "title": "Cart",

@@ -31,7 +31,7 @@ function getAdminApp(): App {
 const PAYMENT_STATUS_MAP: Record<string, string> = {
   "payment_intent.succeeded": "paid",
   "payment_intent.payment_failed": "failed",
-  "payment_intent.canceled": "cancelled",
+  "payment_intent.canceled": "expired",
   "payment_intent.processing": "processing",
 };
 
@@ -61,7 +61,6 @@ async function updateOrderPayment(
 
   const orderDoc = snapshot.docs[0];
   const updateData: Record<string, unknown> = {
-    paymentStatus,
     "payment.status": paymentStatus,
     "payment.stripePaymentIntentId": paymentIntentId,
     updatedAt: new Date(),
@@ -83,42 +82,47 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
+  if (!STRIPE_WEBHOOK_SECRET) {
+    console.error("Webhook: STRIPE_WEBHOOK_SECRET is not set.");
+    return NextResponse.json(
+      {error: "Webhook secret is not configured."},
+      {status: 500},
+    );
+  }
+
   const body = await request.text();
+
+  const signature = request.headers.get("stripe-signature");
+  if (!signature) {
+    return NextResponse.json(
+      {error: "Missing stripe-signature header."},
+      {status: 400},
+    );
+  }
 
   let event: Stripe.Event;
 
-  if (STRIPE_WEBHOOK_SECRET) {
-    const signature = request.headers.get("stripe-signature");
-    if (!signature) {
-      return NextResponse.json(
-        {error: "Missing stripe-signature header."},
-        {status: 400},
-      );
-    }
+  try {
+    event = stripe.webhooks.constructEvent(
+      body,
+      signature,
+      STRIPE_WEBHOOK_SECRET,
+    );
+  } catch (err) {
+    console.error("Webhook signature verification failed:", err);
+    return NextResponse.json(
+      {error: "Webhook signature verification failed."},
+      {status: 400},
+    );
+  }
 
-    try {
-      event = stripe.webhooks.constructEvent(
-        body,
-        signature,
-        STRIPE_WEBHOOK_SECRET,
-      );
-    } catch (err) {
-      console.error("Webhook signature verification failed:", err);
-      return NextResponse.json(
-        {error: "Webhook signature verification failed."},
-        {status: 400},
-      );
-    }
-  } else {
-    // In development without webhook secret, parse event directly
-    try {
-      event = JSON.parse(body) as Stripe.Event;
-    } catch {
-      return NextResponse.json(
-        {error: "Invalid request body."},
-        {status: 400},
-      );
-    }
+  // --- Idempotency check ---
+  const db = getFirestore(getAdminApp());
+  const eventRef = db.collection("processed_events").doc(event.id);
+  const eventSnap = await eventRef.get();
+
+  if (eventSnap.exists) {
+    return NextResponse.json({received: true});
   }
 
   const paymentStatus = PAYMENT_STATUS_MAP[event.type];
@@ -135,6 +139,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({received: true});
   }
 
+  // Mark as processing BEFORE updating the order to guard against race conditions
+  await eventRef.set({
+    status: "processing",
+    eventType: event.type,
+    createdAt: new Date(),
+  });
+
   const paymentMethodType =
     paymentIntent.payment_method_types?.[0] ?? undefined;
 
@@ -145,8 +156,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       paymentIntent.id,
       paymentMethodType,
     );
+
+    await eventRef.update({status: "done", updatedAt: new Date()});
   } catch (error) {
     console.error("Webhook: failed to update order", error);
+    await eventRef.delete();
     return NextResponse.json(
       {error: "Failed to update order."},
       {status: 500},

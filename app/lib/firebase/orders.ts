@@ -1,15 +1,6 @@
 import {httpsCallable} from "firebase/functions";
 import {sendPasswordResetEmail} from "firebase/auth";
-import {
-  collection,
-  doc,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  updateDoc,
-  where,
-} from "firebase/firestore";
+import { collection, doc, getDocs, limit, orderBy, query, updateDoc, where } from "firebase/firestore";
 import {getFirebaseAuth, getFirebaseDb, getFirebaseFunctions, isFirebaseConfigured} from "./client";
 import {
   CreateOrderInput,

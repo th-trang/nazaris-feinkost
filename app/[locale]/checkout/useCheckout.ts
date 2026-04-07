@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCart } from "@/app/context/CartContext";
 import { useTranslations } from "next-intl";
@@ -50,6 +50,7 @@ export function useCheckout(
   stripe: Stripe | null,
   elements: StripeElements | null,
   paymentIntentId: string | null,
+  expiresAt: string | null,
 ) {
   const t = useTranslations("checkout");
   const router = useRouter();
@@ -76,6 +77,43 @@ export function useCheckout(
     specialRequests: "",
     paymentMethod: "card",
   });
+
+  // --- 15-minute session timer ---
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [isExpired, setIsExpired] = useState(false);
+  const [pendingOrderNumber, setPendingOrderNumber] = useState<string | null>(null);
+
+  const cancelPaymentIntent = useCallback(async () => {
+    if (!paymentIntentId) return;
+    try {
+      await fetch("/api/stripe/create-payment-intent", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paymentIntentId }),
+      });
+    } catch (err) {
+      console.error("Failed to cancel expired PaymentIntent", err);
+    }
+  }, [paymentIntentId]);
+
+  useEffect(() => {
+    if (!expiresAt) return;
+
+    const updateTimer = () => {
+      const remaining = new Date(expiresAt).getTime() - Date.now();
+      if (remaining <= 0) {
+        setTimeRemaining(0);
+        setIsExpired(true);
+        cancelPaymentIntent();
+      } else {
+        setTimeRemaining(remaining);
+      }
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [expiresAt, cancelPaymentIntent]);
 
   const [availableLocations, setAvailableLocations] = useState(() => {
     return getLocationsForDate(tomorrow);
@@ -217,6 +255,7 @@ export function useCheckout(
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!stripe || !elements) return;
+    if (isExpired) return;
     setSubmitError(null);
 
     // Validate before submission
@@ -277,17 +316,25 @@ export function useCheckout(
 
     try {
       setIsSubmitting(true);
-      const result = await createOrder(payload);
 
-      // Attach order number to PaymentIntent so the webhook can match it
-      await fetch("/api/stripe/create-payment-intent", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          paymentIntentId: paymentIntentId,
-          orderNumber: result.orderNumber,
-        }),
-      });
+      let currentOrderNumber = pendingOrderNumber;
+
+      // Only create a new order on the first attempt; retries reuse the existing order
+      if (!currentOrderNumber) {
+        const result = await createOrder(payload);
+        currentOrderNumber = result.orderNumber;
+        setPendingOrderNumber(currentOrderNumber);
+
+        // Attach order number to PaymentIntent so the webhook can match it
+        await fetch("/api/stripe/create-payment-intent", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            paymentIntentId: paymentIntentId,
+            orderNumber: currentOrderNumber,
+          }),
+        });
+      }
 
       const origin = window.location.origin;
       const localeParam = Array.isArray(params.locale)
@@ -297,7 +344,7 @@ export function useCheckout(
       const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
-          return_url: `${origin}/${localeParam}/checkout?orderNumber=${encodeURIComponent(result.orderNumber)}`,
+          return_url: `${origin}/${localeParam}/checkout?orderNumber=${encodeURIComponent(currentOrderNumber)}`,
         },
         redirect: "if_required",
       });
@@ -307,7 +354,7 @@ export function useCheckout(
         return;
       }
 
-      setOrderNumber(result.orderNumber);
+      setOrderNumber(currentOrderNumber);
       setIsSubmitted(true);
       clearCart();
       setTimeout(() => {
@@ -336,6 +383,8 @@ export function useCheckout(
     selectedLocation,
     tomorrowStr,
     tomorrow,
+    timeRemaining,
+    isExpired,
     setAvailableLocations,
     handleChange,
     handleSubmit,

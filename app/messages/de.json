@@ -163,7 +163,11 @@
     "address": "Adresse",
     "specialRequests": "Besondere Wünsche (Optional)",
     "specialRequestsPlaceholder": "z.B. Spezielle Verpackung, Abholzeit, etc.",
-    "pickupOn": "am"
+    "pickupOn": "am",
+    "sessionExpired": "Sitzung abgelaufen",
+    "sessionExpiredMessage": "Ihre Zahlungssitzung ist abgelaufen. Bitte laden Sie die Seite neu, um es erneut zu versuchen.",
+    "tryAgain": "Erneut versuchen",
+    "sessionCountdown": "Verbleibende Zeit: {time}"
   },
   "cart": {
     "title": "Warenkorb",

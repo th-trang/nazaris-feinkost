@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+  const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
 
   const redirectStatus = searchParams.get("redirect_status");
@@ -43,6 +44,9 @@ export default function CheckoutPage() {
           setClientSecret(data.clientSecret);
           if (data.paymentIntentId) {
             setPaymentIntentId(data.paymentIntentId);
+          }
+          if (data.expiresAt) {
+            setExpiresAt(data.expiresAt);
           }
         } else {
           setInitError(data.error || "Failed to initialize payment.");
@@ -90,7 +94,7 @@ export default function CheckoutPage() {
 
   return (
     <StripeProvider clientSecret={clientSecret} locale={locale}>
-      <CheckoutForm paymentIntentId={paymentIntentId} />
+      <CheckoutForm paymentIntentId={paymentIntentId} expiresAt={expiresAt} />
     </StripeProvider>
   );
 }

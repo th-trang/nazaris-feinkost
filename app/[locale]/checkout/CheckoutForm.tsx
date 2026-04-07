@@ -1,13 +1,18 @@
 import { useCheckout } from "./useCheckout";
-import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock, Loader2 } from "lucide-react";
+import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock, Loader2, AlertTriangle } from "lucide-react";
 import { getHoursForDay } from "@/app/data/LocationList";
 import DatePicker from "@/app/components/DatePicker";
 import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
 import InputField from "@/app/components/InputField";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 
+const formatTimeRemaining = (ms: number): string => {
+  const minutes = Math.floor(ms / 60000);
+  const seconds = Math.floor((ms % 60000) / 1000);
+  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+};
 
-export function CheckoutForm({ paymentIntentId }: { paymentIntentId: string | null }) {
+export function CheckoutForm({ paymentIntentId, expiresAt }: { paymentIntentId: string | null; expiresAt: string | null }) {
   const stripe = useStripe();
   const elements = useElements();
   const {
@@ -27,10 +32,12 @@ export function CheckoutForm({ paymentIntentId }: { paymentIntentId: string | nu
     setAvailableLocations,
     tomorrowStr,
     tomorrow,
+    timeRemaining,
+    isExpired,
     handleChange,
     handleSubmit,
     setPickupDate,
-  } = useCheckout(stripe, elements, paymentIntentId);
+  } = useCheckout(stripe, elements, paymentIntentId, expiresAt);
 
   // Show nothing while redirecting
   if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
@@ -82,17 +89,59 @@ export function CheckoutForm({ paymentIntentId }: { paymentIntentId: string | nu
     );
   }
 
+  if (isExpired) {
+    return (
+      <div className="min-h-screen flex items-center justify-center py-20 px-4">
+        <div className="max-w-md w-full text-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-gray-100">
+            <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle className="w-14 h-14 text-amber-600" />
+            </div>
+            <h2 className="text-3xl text-gray-900 mb-4">
+              {t("sessionExpired")}
+            </h2>
+            <p className="text-gray-700 mb-6">
+              {t("sessionExpiredMessage")}
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-lg"
+            >
+              {t("tryAgain")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto pt-[50px]">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="text-4xl lg:text-5xl tracking-tight text-gray-900 mb-4">
-            {t('title')}
-          </h1>
-          <p className="text-gray-700">
-            {t('completeOrder')}
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h1 className="text-4xl lg:text-5xl tracking-tight text-gray-900 mb-4">
+                {t('title')}
+              </h1>
+              <p className="text-gray-700">
+                {t('completeOrder')}
+              </p>
+            </div>
+            {timeRemaining !== null && timeRemaining > 0 && (
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium shrink-0 ${
+                timeRemaining < 2 * 60 * 1000
+                  ? "bg-red-50 border-red-200 text-red-700"
+                  : timeRemaining < 5 * 60 * 1000
+                    ? "bg-amber-50 border-amber-200 text-amber-700"
+                    : "bg-green-50 border-green-200 text-green-700"
+              }`}>
+                <Clock className="w-4 h-4" />
+                <span>{t("sessionCountdown", { time: formatTimeRemaining(timeRemaining) })}</span>
+              </div>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} noValidate>
