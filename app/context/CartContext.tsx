@@ -20,6 +20,7 @@ interface CartContextType {
   removeFromCart: (cartItemId: string) => void;
   updateQuantity: (cartItemId: string, quantity: number) => void;
   clearCart: () => void;
+  restoreCart: (items: CartItem[]) => void;
   cartCount: number;
   cartTotal: number;
   isCartOpen: boolean;
@@ -76,6 +77,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsCartOpen(false);
   };
 
+  const restoreCart = (items: CartItem[]) => {
+    setCartItems(items);
+  };
+
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
   const cartTotal = cartItems.reduce(
     (total, item) => total + item.price * item.quantity,
@@ -90,6 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         removeFromCart,
         updateQuantity,
         clearCart,
+        restoreCart,
         cartCount,
         cartTotal,
         isCartOpen,

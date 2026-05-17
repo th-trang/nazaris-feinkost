@@ -1,10 +1,12 @@
 import {NextRequest, NextResponse} from "next/server";
 import Stripe from "stripe";
+import {isSepaAllowedForPickupDate} from "@/app/lib/helper/Utils";
 
 const PAYMENT_SESSION_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 interface CreatePaymentIntentRequest {
   amount: number; // total in EUR (e.g. 12.50)
+  pickupDate?: string; // ISO date string, used to decide whether SEPA is offered
 }
 
 interface UpdateMetadataRequest {
@@ -48,10 +50,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       Date.now() + PAYMENT_SESSION_DURATION_MS,
     ).toISOString();
 
+    const sepaAllowed = body.pickupDate
+      ? isSepaAllowedForPickupDate(body.pickupDate)
+      : false;
+    const paymentMethodTypes = sepaAllowed
+      ? ["card", "paypal", "sepa_debit"]
+      : ["card", "paypal"];
+
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(body.amount * 100),
       currency: "eur",
-      payment_method_types: ["card", "paypal", "sepa_debit"],
+      payment_method_types: paymentMethodTypes,
       metadata: {expiresAt},
     });
 
@@ -64,6 +73,54 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.error("PaymentIntent creation error:", error);
     return NextResponse.json(
       {error: "Could not create payment intent."},
+      {status: 500},
+    );
+  }
+}
+
+interface UpdatePaymentMethodsRequest {
+  paymentIntentId: string;
+  pickupDate: string;
+}
+
+export async function PUT(request: NextRequest): Promise<NextResponse> {
+  if (!stripe) {
+    return NextResponse.json(
+      {error: "Stripe is not configured. Set STRIPE_SECRET_KEY."},
+      {status: 500},
+    );
+  }
+
+  let body: UpdatePaymentMethodsRequest;
+
+  try {
+    body = (await request.json()) as UpdatePaymentMethodsRequest;
+  } catch {
+    return NextResponse.json({error: "Invalid request body."}, {status: 400});
+  }
+
+  if (!body.paymentIntentId || !body.pickupDate) {
+    return NextResponse.json(
+      {error: "paymentIntentId and pickupDate are required."},
+      {status: 400},
+    );
+  }
+
+  try {
+    const sepaAllowed = isSepaAllowedForPickupDate(body.pickupDate);
+    const paymentMethodTypes = sepaAllowed
+      ? ["card", "paypal", "sepa_debit"]
+      : ["card", "paypal"];
+
+    await stripe.paymentIntents.update(body.paymentIntentId, {
+      payment_method_types: paymentMethodTypes,
+    });
+
+    return NextResponse.json({success: true, sepaAllowed});
+  } catch (error) {
+    console.error("PaymentIntent payment methods update error:", error);
+    return NextResponse.json(
+      {error: "Could not update payment intent."},
       {status: 500},
     );
   }

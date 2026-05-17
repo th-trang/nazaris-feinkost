@@ -1,27 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { ShoppingCart, Filter } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import { useTranslations } from 'next-intl';
 import { products, Product } from "@/app/data/ProductList";
 import ProductCard from "@/app/components/ProductCard";
+import ProductFilterPanel, { ProductFilters, DEFAULT_FILTERS } from "@/app/components/ProductFilterPanel";
 
 
 
 // Map German category names to translation keys
 const categoryKeyMap: Record<string, string> = {
-  "Dips & Aufstriche": "dipsAndSpreads",
-  "Hauptgerichte": "mainCourses",
-  "Salate": "salads",
-  "Vorspeisen": "appetizers",
-  "Desserts": "desserts",
+  "Oliven": "oliven",
+  "Antipasti": "antipasti",
+  "Hummus": "hummus",
+  "Pesto": "pesto",
+  "Cremes": "cremes",
 };
 
 export default function ProductsPage() {
   const t = useTranslations('products');
   const { addToCart } = useCart();
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [filters, setFilters] = useState<ProductFilters>(DEFAULT_FILTERS);
+  const [isFilterVisible, setIsFilterVisible] = useState(false);
   const [weights, setWeights] = useState<{ [key: string]: string }>({});
 
   // Helper to get translated category
@@ -32,10 +34,39 @@ export default function ProductsPage() {
 
   const categories = ["all", ...Array.from(new Set(products.map((p) => p.category)))];
 
-  const filteredProducts =
-    selectedCategory === "all"
-      ? products
-      : products.filter((p) => p.category === selectedCategory);
+  const categoryOptions = categories.map((c) => ({
+    value: c,
+    label: c === "all" ? t("filter.allCategories") : getTranslatedCategory(c),
+  }));
+
+  const filteredProducts = products.filter((p) => {
+    if (filters.category !== "all" && p.category !== filters.category) return false;
+
+    if (filters.spice === "spicy") {
+      const isSpicy = p.ingredients.some((ing) => ing.toLowerCase().includes("chili"));
+      if (!isSpicy) return false;
+    } else if (filters.spice === "mild") {
+      const isSpicy = p.ingredients.some((ing) => ing.toLowerCase().includes("chili"));
+      if (isSpicy) return false;
+    }
+
+    if (filters.garlic === "withGarlic") {
+      const hasGarlic = p.ingredients.some((ing) =>
+        ing.toLowerCase().includes("knoblauch") || ing.toLowerCase().includes("garlic")
+      );
+      if (!hasGarlic) return false;
+    } else if (filters.garlic === "withoutGarlic") {
+      const hasGarlic = p.ingredients.some((ing) =>
+        ing.toLowerCase().includes("knoblauch") || ing.toLowerCase().includes("garlic")
+      );
+      if (hasGarlic) return false;
+    }
+
+    if (filters.diet === "vegan" && !p.isVegan) return false;
+    if (filters.diet === "notVegan" && p.isVegan) return false;
+
+    return true;
+  });
 
   const handleWeightChange = (productId: string, value: string) => {
     setWeights({ ...weights, [productId]: value });
@@ -88,25 +119,35 @@ export default function ProductsPage() {
           </p>
         </div>
 
-        {/* Category Filter */}
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center space-x-2 overflow-x-auto pb-2">
-            <Filter className="w-5 h-5 text-gray-600 flex-shrink-0" />
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full transition-all whitespace-nowrap ${
-                  selectedCategory === category
-                    ? "bg-green-600 text-white shadow-lg"
-                    : "bg-white/80 text-gray-700 hover:bg-white hover:shadow-md"
-                }`}
-              >
-                {category === "all" ? t('all') : getTranslatedCategory(category)}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Filter Panel */}
+        <ProductFilterPanel
+          filters={filters}
+          onFiltersChange={setFilters}
+          categoryOptions={categoryOptions}
+          isVisible={isFilterVisible}
+          onToggleVisibility={() => setIsFilterVisible((v) => !v)}
+          translations={{
+            showFilter: t('filter.showFilter'),
+            hideFilter: t('filter.hideFilter'),
+            title: t('filter.title'),
+            reset: t('filter.reset'),
+            category: t('filter.category'),
+            allCategories: t('filter.allCategories'),
+            spice: t('filter.spice'),
+            all: t('filter.all'),
+            spicy: t('filter.spicy'),
+            mild: t('filter.mild'),
+            garlic: t('filter.garlic'),
+            withGarlic: t('filter.withGarlic'),
+            withoutGarlic: t('filter.withoutGarlic'),
+            diet: t('filter.diet'),
+            vegan: t('filter.vegan'),
+            notVegan: t('filter.notVegan'),
+            availability: t('filter.availability'),
+            available: t('filter.available'),
+            notAvailable: t('filter.notAvailable'),
+          }}
+        />
 
         {/* Product Grid */}
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">

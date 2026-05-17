@@ -145,63 +145,63 @@ export const getStaffUsers = async (): Promise<StaffUsersResult> => {
   return result.data;
 };
 
-export const createStaffUser = async (input: CreateStaffUserInput): Promise<StaffUser> => {
-  if (!isFirebaseConfigured) {
-    throw new Error("Firebase is not configured in this environment.");
-  }
+// export const createStaffUser = async (input: CreateStaffUserInput): Promise<StaffUser> => {
+//   if (!isFirebaseConfigured) {
+//     throw new Error("Firebase is not configured in this environment.");
+//   }
 
-  const callable = httpsCallable<CreateStaffUserInput, StaffUser>(
-    getFirebaseFunctions(),
-    "createStaffUser",
-  );
+//   const callable = httpsCallable<CreateStaffUserInput, StaffUser>(
+//     getFirebaseFunctions(),
+//     "createStaffUser",
+//   );
 
-  const result = await callable(input);
-  return result.data;
-};
+//   const result = await callable(input);
+//   return result.data;
+// };
 
-export const updateStaffUser = async (input: UpdateStaffUserInput): Promise<StaffUser> => {
-  if (!isFirebaseConfigured) {
-    throw new Error("Firebase is not configured in this environment.");
-  }
+// export const updateStaffUser = async (input: UpdateStaffUserInput): Promise<StaffUser> => {
+//   if (!isFirebaseConfigured) {
+//     throw new Error("Firebase is not configured in this environment.");
+//   }
 
-  const callable = httpsCallable<UpdateStaffUserInput, StaffUser>(
-    getFirebaseFunctions(),
-    "updateStaffUser",
-  );
+//   const callable = httpsCallable<UpdateStaffUserInput, StaffUser>(
+//     getFirebaseFunctions(),
+//     "updateStaffUser",
+//   );
 
-  const result = await callable(input);
-  return result.data;
-};
+//   const result = await callable(input);
+//   return result.data;
+// };
 
-export const deleteStaffUser = async (uid: string): Promise<void> => {
-  if (!isFirebaseConfigured) {
-    throw new Error("Firebase is not configured in this environment.");
-  }
+// export const deleteStaffUser = async (uid: string): Promise<void> => {
+//   if (!isFirebaseConfigured) {
+//     throw new Error("Firebase is not configured in this environment.");
+//   }
 
-  const callable = httpsCallable<{uid: string}, {success: boolean}>(
-    getFirebaseFunctions(),
-    "deleteStaffUser",
-  );
+//   const callable = httpsCallable<{uid: string}, {success: boolean}>(
+//     getFirebaseFunctions(),
+//     "deleteStaffUser",
+//   );
 
-  await callable({uid});
-};
+//   await callable({uid});
+// };
 
-export const resetStaffUserPassword = async (uid: string): Promise<{email: string}> => {
-  if (!isFirebaseConfigured) {
-    throw new Error("Firebase is not configured in this environment.");
-  }
+// export const resetStaffUserPassword = async (uid: string): Promise<{email: string}> => {
+//   if (!isFirebaseConfigured) {
+//     throw new Error("Firebase is not configured in this environment.");
+//   }
 
-  // First verify user is staff and get their email via Cloud Function
-  const callable = httpsCallable<{uid: string}, {success: boolean; email: string}>(
-    getFirebaseFunctions(),
-    "resetStaffUserPassword",
-  );
+//   // First verify user is staff and get their email via Cloud Function
+//   const callable = httpsCallable<{uid: string}, {success: boolean; email: string}>(
+//     getFirebaseFunctions(),
+//     "resetStaffUserPassword",
+//   );
 
-  const result = await callable({uid});
-  const email = result.data.email;
+//   const result = await callable({uid});
+//   const email = result.data.email;
 
-  // Actually send the password reset email using Firebase Auth client SDK
-  await sendPasswordResetEmail(getFirebaseAuth(), email);
+//   // Actually send the password reset email using Firebase Auth client SDK
+//   await sendPasswordResetEmail(getFirebaseAuth(), email);
 
-  return {email};
-};
+//   return {email};
+// };

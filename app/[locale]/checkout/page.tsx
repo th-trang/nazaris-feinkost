@@ -16,11 +16,14 @@ export default function CheckoutPage() {
   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
   const [initError, setInitError] = useState<string | null>(null);
+  const [isCheckoutComplete, setIsCheckoutComplete] = useState(false);
+  const [retryKey, setRetryKey] = useState(0);
 
   const redirectStatus = searchParams.get("redirect_status");
   const returnClientSecret = searchParams.get("payment_intent_client_secret");
   const oldStripeStatus = searchParams.get("stripe");
-  const isStripeReturn = !!redirectStatus || !!oldStripeStatus;
+  const refKey = searchParams.get("ref");
+  const isStripeReturn = !!redirectStatus || !!returnClientSecret || !!oldStripeStatus || !!refKey;
 
   useEffect(() => {
     if (returnClientSecret) {
@@ -32,22 +35,24 @@ export default function CheckoutPage() {
 
     const controller = new AbortController();
 
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split("T")[0];
+
     fetch("/api/stripe/create-payment-intent", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: cartTotal }),
+      body: JSON.stringify({ amount: cartTotal, pickupDate: tomorrowStr }),
       signal: controller.signal,
     })
       .then((res) => res.json())
       .then((data) => {
+        console.log("Payment Intent Response:", data);
         if (data.clientSecret) {
           setClientSecret(data.clientSecret);
-          if (data.paymentIntentId) {
-            setPaymentIntentId(data.paymentIntentId);
-          }
-          if (data.expiresAt) {
-            setExpiresAt(data.expiresAt);
-          }
+          console.log("Client Secret set:", data.clientSecret);
+          if (data.paymentIntentId)  setPaymentIntentId(data.paymentIntentId);
+          if (data.expiresAt)  setExpiresAt(data.expiresAt);
         } else {
           setInitError(data.error || "Failed to initialize payment.");
         }
@@ -59,15 +64,15 @@ export default function CheckoutPage() {
       });
 
     return () => controller.abort();
-  }, [cartTotal, returnClientSecret]);
+  }, [cartTotal, returnClientSecret, retryKey]);
 
   useEffect(() => {
-    if (cartItems.length === 0 && !isStripeReturn) {
+    if (cartItems.length === 0 && !isStripeReturn && !isCheckoutComplete) {
       router.push("/products");
     }
-  }, [cartItems.length, isStripeReturn, router]);
+  }, [cartItems.length, isStripeReturn, isCheckoutComplete, router]);
 
-  if (cartItems.length === 0 && !isStripeReturn) return null;
+  if (cartItems.length === 0 && !isStripeReturn && !isCheckoutComplete) return null;
 
   if (initError) {
     return (
@@ -94,7 +99,12 @@ export default function CheckoutPage() {
 
   return (
     <StripeProvider clientSecret={clientSecret} locale={locale}>
-      <CheckoutForm paymentIntentId={paymentIntentId} expiresAt={expiresAt} />
+      <CheckoutForm 
+      paymentIntentId={paymentIntentId} 
+      expiresAt={expiresAt} 
+      onSuccess={() => setIsCheckoutComplete(true)} 
+      onPaymentFailed={() => setRetryKey(k => k + 1)}
+      />
     </StripeProvider>
   );
 }

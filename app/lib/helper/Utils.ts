@@ -22,3 +22,28 @@ export const toDateLabel = (date: string, locale: string): string => {
       currency: currency || "EUR",
     }).format(value);
   };
+
+/**
+ * Returns true if the given pickup date is at least 5 business days (Mon–Fri)
+ * from today. Required to enable SEPA debit as a payment option.
+ */
+export function isSepaAllowedForPickupDate(pickupDateStr: string): boolean {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const pickupDate = new Date(pickupDateStr + "T00:00:00");
+  pickupDate.setHours(0, 0, 0, 0);
+
+  let businessDays = 0;
+  const cursor = new Date(today);
+  cursor.setDate(cursor.getDate() + 1); // start counting from tomorrow
+
+  while (cursor <= pickupDate) {
+    const day = cursor.getDay();
+    if (day !== 0 && day !== 6) { // Mon–Fri only
+      businessDays++;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return businessDays >= 5;
+}

@@ -6,13 +6,13 @@ import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
 import InputField from "@/app/components/InputField";
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 
-const formatTimeRemaining = (ms: number): string => {
-  const minutes = Math.floor(ms / 60000);
-  const seconds = Math.floor((ms % 60000) / 1000);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-};
+// const formatTimeRemaining = (ms: number): string => {
+//   const minutes = Math.floor(ms / 60000);
+//   const seconds = Math.floor((ms % 60000) / 1000);
+//   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+// };
 
-export function CheckoutForm({ paymentIntentId, expiresAt }: { paymentIntentId: string | null; expiresAt: string | null }) {
+export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentFailed }: { paymentIntentId: string | null; expiresAt: string | null; onSuccess?: () => void; onPaymentFailed?: () => void }) {
   const stripe = useStripe();
   const elements = useElements();
   const {
@@ -37,7 +37,7 @@ export function CheckoutForm({ paymentIntentId, expiresAt }: { paymentIntentId: 
     handleChange,
     handleSubmit,
     setPickupDate,
-  } = useCheckout(stripe, elements, paymentIntentId, expiresAt);
+  } = useCheckout(stripe, elements, paymentIntentId, expiresAt, onSuccess, onPaymentFailed);
 
   // Show nothing while redirecting
   if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
@@ -129,7 +129,7 @@ export function CheckoutForm({ paymentIntentId, expiresAt }: { paymentIntentId: 
                 {t('completeOrder')}
               </p>
             </div>
-            {timeRemaining !== null && timeRemaining > 0 && (
+            {/* {timeRemaining !== null && timeRemaining > 0 && (
               <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium shrink-0 ${
                 timeRemaining < 2 * 60 * 1000
                   ? "bg-red-50 border-red-200 text-red-700"
@@ -140,7 +140,7 @@ export function CheckoutForm({ paymentIntentId, expiresAt }: { paymentIntentId: 
                 <Clock className="w-4 h-4" />
                 <span>{t("sessionCountdown", { time: formatTimeRemaining(timeRemaining) })}</span>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
