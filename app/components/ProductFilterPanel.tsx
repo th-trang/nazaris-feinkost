@@ -2,32 +2,14 @@
 
 import { SlidersHorizontal, X } from "lucide-react";
 import DropdownList from "./DropdownList";
+import {
+  ProductFilters,
+  DEFAULT_FILTERS,
+  isDefaultFilters,
+} from "@/app/[locale]/products/filterProduct";
 
-export interface ProductFilters {
-  category: string;
-  spice: string;
-  garlic: string;
-  diet: string;
-  availability: string;
-}
-
-export const DEFAULT_FILTERS: ProductFilters = {
-  category: "all",
-  spice: "all",
-  garlic: "all",
-  diet: "all",
-  availability: "all",
-};
-
-export function isDefaultFilters(filters: ProductFilters): boolean {
-  return (
-    filters.category === "all" &&
-    filters.spice === "all" &&
-    filters.garlic === "all" &&
-    filters.diet === "all" &&
-    filters.availability === "all"
-  );
-}
+export type { ProductFilters };
+export { DEFAULT_FILTERS, isDefaultFilters };
 
 interface FilterSelectProps {
   label: string;

@@ -7,17 +7,9 @@ import { useTranslations } from 'next-intl';
 import { products, Product } from "@/app/data/ProductList";
 import ProductCard from "@/app/components/ProductCard";
 import ProductFilterPanel, { ProductFilters, DEFAULT_FILTERS } from "@/app/components/ProductFilterPanel";
+import { filterProducts, categoryKeyMap } from "./filterProduct";
 
 
-
-// Map German category names to translation keys
-const categoryKeyMap: Record<string, string> = {
-  "Oliven": "oliven",
-  "Antipasti": "antipasti",
-  "Hummus": "hummus",
-  "Pesto": "pesto",
-  "Cremes": "cremes",
-};
 
 export default function ProductsPage() {
   const t = useTranslations('products');
@@ -39,34 +31,7 @@ export default function ProductsPage() {
     label: c === "all" ? t("filter.allCategories") : getTranslatedCategory(c),
   }));
 
-  const filteredProducts = products.filter((p) => {
-    if (filters.category !== "all" && p.category !== filters.category) return false;
-
-    if (filters.spice === "spicy") {
-      const isSpicy = p.ingredients.some((ing) => ing.toLowerCase().includes("chili"));
-      if (!isSpicy) return false;
-    } else if (filters.spice === "mild") {
-      const isSpicy = p.ingredients.some((ing) => ing.toLowerCase().includes("chili"));
-      if (isSpicy) return false;
-    }
-
-    if (filters.garlic === "withGarlic") {
-      const hasGarlic = p.ingredients.some((ing) =>
-        ing.toLowerCase().includes("knoblauch") || ing.toLowerCase().includes("garlic")
-      );
-      if (!hasGarlic) return false;
-    } else if (filters.garlic === "withoutGarlic") {
-      const hasGarlic = p.ingredients.some((ing) =>
-        ing.toLowerCase().includes("knoblauch") || ing.toLowerCase().includes("garlic")
-      );
-      if (hasGarlic) return false;
-    }
-
-    if (filters.diet === "vegan" && !p.isVegan) return false;
-    if (filters.diet === "notVegan" && p.isVegan) return false;
-
-    return true;
-  });
+  const filteredProducts = filterProducts(products, filters);
 
   const handleWeightChange = (productId: string, value: string) => {
     setWeights({ ...weights, [productId]: value });

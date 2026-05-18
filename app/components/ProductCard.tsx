@@ -1,8 +1,17 @@
 "use client";
 
-import { Plus, Scale } from "lucide-react";
+import { Badge, Calendar, Clock, Flame, Plus, Scale } from "lucide-react";
 import { Product } from "@/app/data/ProductList";
 import DropdownList, { DropdownOption } from "./DropdownList";
+import {
+  SpicyLevel,
+  GarlicLevel,
+  DietType,
+  PriceUnit,
+  getSpicyLabel,
+  getGarlicLabel,
+  getShelfLifeLabel,
+} from "@/app/[locale]/products/filterProduct";
 
 // Generate weight options from 100g to 1kg in 50g steps
 const weightOptions: DropdownOption[] = Array.from({ length: 19 }, (_, i) => {
@@ -61,24 +70,78 @@ export default function ProductCard({
       <div className="p-5">
         {/* Name and Category */}
         <div className="mb-3">
-          <h3 className="text-xl text-gray-900 mb-1">{translations.productName}</h3>
-          <p className="text-xs text-gray-500 uppercase tracking-wide">{translatedCategory}</p>
+          <h3 className="text-xl text-gray-900 mb-1">
+            {translations.productName}
+          </h3>
+          <p className="text-xs text-gray-500 uppercase tracking-wide">
+            {translatedCategory}
+          </p>
+        </div>
+
+        {/* Product Properties */}
+        <div className="mb-4 space-y-2">
+          <div className="flex items-center gap-2 text-sm">
+            <Flame
+              className={`w-4 h-4 ${product.spicyLevel === "spicy" ? "text-red-500" : product.spicyLevel === "little_spicy" ? "text-orange-500" : "text-gray-400"}`}
+            />
+            <span className="text-gray-700">
+              {getSpicyLabel(product.spicyLevel)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-700">
+              {getGarlicLabel(product.garlicLevel)}
+            </span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="w-4 h-4 text-blue-500" />
+            <span className="text-gray-600">MHD:</span>
+            <span className="text-gray-700 font-medium">
+              {getShelfLifeLabel(product.minShelfLifeDays)}
+            </span>
+          </div>
+          {/* {isProductSeasonal(product) && (
+            <div className="flex items-center gap-2 text-sm">
+              <Calendar className="w-4 h-4 text-blue-500" />
+              <span className="text-gray-700">
+                {getMonthNames(product.availableMonths)}
+              </span>
+            </div>
+          )} */}
         </div>
 
         {/* Ingredients */}
         <div className="mb-4">
-          <p className="text-xs text-gray-600 mb-2">{translations.ingredients}:</p>
+          <p className="text-xs text-gray-600 mb-2">
+            {translations.ingredients}:
+          </p>
           <div className="flex flex-wrap gap-1">
-            {translations.productIngredients.map((ingredient: string, index: number) => (
-              <span
-                key={index}
-                className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
-              >
-                {ingredient}
-              </span>
-            ))}
+            {translations.productIngredients.map(
+              (ingredient: string, index: number) => (
+                <span
+                  key={index}
+                  className="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full"
+                >
+                  {ingredient}
+                </span>
+              ),
+            )}
           </div>
         </div>
+
+        {/* Allergies */}
+        {/* {product.allergies.length > 0 && (
+          <div className="mb-4">
+            <p className="text-xs text-gray-600 mb-1">Allergene:</p>
+            <div className="flex flex-wrap gap-1">
+              {product.allergies.map((allergy: any, index: any) => (
+                <Badge key={index} variant="destructive" className="text-xs">
+                  {allergy}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        )} */}
 
         {/* Weight Input Section */}
         <div className="mb-4">

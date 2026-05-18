@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "emulator": "node -e \"require('fs').mkdirSync('./emulator-data',{recursive:true})\" && firebase emulators:start --import=./emulator-data --export-on-exit=./emulator-data",
+    "emulator:fresh": "firebase emulators:start --export-on-exit=./emulator-data",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
     "test:headed": "playwright test --headed",

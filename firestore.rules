@@ -41,6 +41,16 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // Internal metadata used by backend functions.
     match /meta/{docId} {
       allow read, write: if false;
