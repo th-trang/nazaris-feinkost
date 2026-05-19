@@ -347,7 +347,7 @@ export function useCheckout(
 
         // Attach order number to PaymentIntent so the webhook can match it
         await fetch("/api/stripe/create-payment-intent", {
-          method: "POST",
+          method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             paymentIntentId: currentPaymentIntentId,

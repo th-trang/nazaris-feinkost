@@ -13,3 +13,5 @@ node_modules/
 .nazaris-feinkost-firebase-adminsdk-fbsvc-55e5a0c2bd.json
 .set-staff-claim.mjs
 .remove-staff-claim.mjs
+
+/.firestore-debug.log

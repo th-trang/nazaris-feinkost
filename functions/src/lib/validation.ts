@@ -65,7 +65,7 @@ export const assertValidCreateOrderPayload = (
 		);
 	}
 
-	if (paymentMethod !== "card" && paymentMethod !== "paypal") {
+	if (paymentMethod !== "card" && paymentMethod !== "paypal" && paymentMethod !== "sepa_debit") {
 		throw new HttpsError("invalid-argument", "Invalid payment method.");
 	}
 

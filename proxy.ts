@@ -12,12 +12,13 @@ const publicPages = [
     "/checkout",
     "/staff/orders",
     "staff/login",
+    "/impressum",
+    "/datenschutz",
 ];
 
 const intlMiddleware = createIntlMiddleware({
   locales,
-  defaultLocale: "de",
-  localePrefix: "always",
+  defaultLocale: 'en',
 });
 
 export default function proxy(request: NextRequest) {

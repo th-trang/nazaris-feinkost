@@ -1,4 +1,10 @@
 {
+  "footer": {
+    "tagline": "Hausgemachte mediterrane Spezialitäten seit 1992.",
+    "imprint": "Impressum",
+    "privacy": "Datenschutz",
+    "copyright": "© 2014 – {year} Nazari's Feinkost. Alle Rechte vorbehalten."
+  },
   "nav": {
     "home": "Home",
     "aboutUs": "Über Uns",
@@ -74,9 +80,20 @@
     "pricePerKg": "Preis pro kg",
     "weightInGrams": "Gewicht in Gramm",
     "weightPlaceholder": "z.B. 250",
+    "quantityInPieces": "Anzahl (Stück)",
+    "quantityPlaceholder": "Stückzahl wählen",
     "price": "Preis",
     "addToCart": "In den Warenkorb",
-    "invalidAmount": "Bitte geben Sie eine gültige Menge in Gramm ein",
+    "invalidAmount": "Bitte geben Sie eine gültige Menge ein",
+    "spicy": "Scharf",
+    "mildlySpicy": "Leicht scharf",
+    "notSpicy": "Nicht scharf",
+    "withGarlic": "Mit Knoblauch",
+    "littleGarlic": "Wenig Knoblauch",
+    "noGarlic": "Kein Knoblauch",
+    "pricePer100g": "Preis pro 100g",
+    "pricePerPiece": "Preis pro Stück",
+    "pieces": "Stück",
     "filter": {
       "showFilter": "Filter einblenden",
       "hideFilter": "Filter ausblenden",
@@ -160,6 +177,8 @@
     "cashOnDelivery": "Barzahlung bei Lieferung",
     "orderSummary": "Bestellübersicht",
     "quantity": "Menge",
+    "grams": "g",
+    "pieces": "Stk.",
     "total": "Gesamt",
     "placeOrder": "Bestellung abschließen",
     "placeOrderProcessing": "Bestellung wird übermittelt...",
@@ -199,7 +218,9 @@
     "subtotal": "Zwischensumme",
     "total": "Gesamt",
     "checkout": "Zur Kasse",
-    "continueShopping": "Weiter einkaufen"
+    "continueShopping": "Weiter einkaufen",
+    "grams": "g",
+    "pieces": "Stk."
   },
   "staffOrders": {
     "dashboardTitle": "Mitarbeiter-Dashboard",

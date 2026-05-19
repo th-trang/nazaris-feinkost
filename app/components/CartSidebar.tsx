@@ -92,29 +92,42 @@ export function CartSidebar() {
                       {/* Details */}
                       <div className="flex-1 min-w-0">
                         <h3 className="text-gray-900 mb-1 truncate">{item.name}</h3>
+                        {item.weightInGrams ? (
+                          <p className="text-xs text-green-700 font-medium mb-1">
+                            {item.weightInGrams} {t('grams')}
+                          </p>
+                        ) : item.pieces ? (
+                          <p className="text-xs text-green-700 font-medium mb-1">
+                            {item.pieces} {t('pieces')}
+                          </p>
+                        ) : null}
                         <p className="text-sm text-gray-600 mb-2">
                           €{item.price.toFixed(2)}
                         </p>
 
-                        {/* Quantity Controls */}
+                        {/* Quantity Controls — only for per-piece items */}
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
-                            <button
-                              onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity - 1)}
-                              className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            >
-                              <Minus className="w-4 h-4 text-gray-700" />
-                            </button>
-                            <span className="w-8 text-center text-gray-900">
-                              {item.quantity}
-                            </span>
-                            <button
-                              onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity + 1)}
-                              className="p-1 hover:bg-gray-200 rounded transition-colors"
-                            >
-                              <Plus className="w-4 h-4 text-gray-700" />
-                            </button>
-                          </div>
+                          {!item.weightInGrams ? (
+                            <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
+                              <button
+                                onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity - 1)}
+                                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                              >
+                                <Minus className="w-4 h-4 text-gray-700" />
+                              </button>
+                              <span className="w-8 text-center text-gray-900">
+                                {item.quantity}
+                              </span>
+                              <button
+                                onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity + 1)}
+                                className="p-1 hover:bg-gray-200 rounded transition-colors"
+                              >
+                                <Plus className="w-4 h-4 text-gray-700" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div />
+                          )}
 
                           <button
                             onClick={() => removeFromCart(item.cartItemId || item.id)}

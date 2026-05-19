@@ -18,5 +18,5 @@ export {syncLocationsCatalog} from "./handlers/syncLocationsCatalog.js";
 export {notifyUpcomingOrders, triggerUpcomingOrdersDigest} from "./handlers/notifyUpcomingOrders.js";
 export {onOrderPaid} from "./handlers/onOrderPaid.js";
 export {stripeWebhook} from "./handlers/stripeWebhook.js";
-export {checkAndRestoreProducts} from "./csv-failsafe/checkAndRestore.js";
+export {checkAndRestoreProducts, scheduledProductCheck} from "./csv-failsafe/checkAndRestore.js";
 export {exportProductsToCSV} from "./csv-failsafe/exportToCSV.js";

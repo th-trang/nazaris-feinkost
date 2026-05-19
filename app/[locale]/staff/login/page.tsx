@@ -81,7 +81,7 @@ export default function StaffLoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center py-20 px-4 pt-26">
+    <div className="min-h-screen flex items-center justify-center py-20 px-4 pt-32">
       <div className="max-w-md w-full bg-white/80 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-gray-100">
         <div className="text-center mb-6">
           <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center mx-auto">

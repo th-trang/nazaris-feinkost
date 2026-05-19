@@ -1,4 +1,5 @@
 import { Product } from "@/app/data/ProductList";
+import { Timestamp } from "firebase/firestore";
 
 // ─── Filter State ─────────────────────────────────────────────────────────────
 
@@ -28,64 +29,25 @@ export function isDefaultFilters(filters: ProductFilters): boolean {
   );
 }
 
-// ─── Category Mapping ─────────────────────────────────────────────────────────
-
-export const categoryKeyMap: Record<string, string> = {
-  Oliven: "oliven",
-  Antipasti: "antipasti",
-  Hummus: "hummus",
-  Pesto: "pesto",
-  Cremes: "cremes",
-};
-
-// ─── Product Attribute Types ──────────────────────────────────────────────────
-
-export type SpicyLevel = "not_spicy" | "little_spicy" | "spicy";
-export type GarlicLevel = "no_garlic" | "little_garlic" | "with_garlic";
-export type DietType = "vegan" | "vegetarian" | "dairy";
-export type PriceUnit = "per_kg" | "per_piece";
-
 // ─── Display Label Helpers ────────────────────────────────────────────────────
 
-export function getSpicyLabel(level: SpicyLevel): string {
-  switch (level) {
-    case "spicy":        return "Scharf";
-    case "little_spicy": return "Leicht scharf";
-    case "not_spicy":    return "Nicht scharf";
-  }
+export function getSpicyLabel(level: 0 | 1 | 2): string {
+  if (level === 2) return "Scharf";
+  if (level === 1) return "Leicht scharf";
+  return "Nicht scharf";
 }
 
-export function getGarlicLabel(level: GarlicLevel): string {
-  switch (level) {
-    case "with_garlic":   return "Mit Knoblauch";
-    case "little_garlic": return "Wenig Knoblauch";
-    case "no_garlic":     return "Kein Knoblauch";
-  }
+export function getGarlicLabel(level: 0 | 1 | 2): string {
+  if (level === 2) return "Mit Knoblauch";
+  if (level === 1) return "Wenig Knoblauch";
+  return "Kein Knoblauch";
 }
 
-export function getShelfLifeLabel(days: number): string {
-  if (days === 1) return "1 Tag";
-  if (days < 7) return `${days} Tage`;
-  if (days === 7) return "1 Woche";
-  if (days < 14) return `${days} Tage`;
-  if (days === 14) return "2 Wochen";
-  if (days < 30) return `${days} Tage`;
-  if (days === 30) return "1 Monat";
-  return `${Math.floor(days / 30)} Monate`;
-}
-
-// ─── Ingredient Predicates ────────────────────────────────────────────────────
-
-function hasChili(ingredients: string[]): boolean {
-  return ingredients.some((ing) => ing.toLowerCase().includes("chili"));
-}
-
-function hasGarlic(ingredients: string[]): boolean {
-  return ingredients.some(
-    (ing) =>
-      ing.toLowerCase().includes("knoblauch") ||
-      ing.toLowerCase().includes("garlic"),
-  );
+export function getMhdLabel(mhd: Timestamp | null, locale: string = "de"): string | null {
+  if (!mhd) return null;
+  const date = mhd.toDate();
+  const localeStr = locale === "en" ? "en-GB" : "de-DE";
+  return date.toLocaleDateString(localeStr, { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 // ─── Filter Function ──────────────────────────────────────────────────────────
@@ -95,19 +57,19 @@ export function filterProducts(
   filters: ProductFilters,
 ): Product[] {
   return products.filter((p) => {
-    if (filters.category !== "all" && p.category !== filters.category)
+    if (filters.category !== "all" && p.categoryId !== filters.category)
       return false;
 
-    if (filters.spice === "spicy" && !hasChili(p.ingredients)) return false;
-    if (filters.spice === "mild" && hasChili(p.ingredients)) return false;
+    if (filters.spice === "spicy" && (p.filters?.spiceLevel ?? 0) === 0) return false;
+    if (filters.spice === "mild" && (p.filters?.spiceLevel ?? 0) > 0) return false;
 
-    if (filters.garlic === "withGarlic" && !hasGarlic(p.ingredients))
+    if (filters.garlic === "withGarlic" && (p.filters?.knoblauch ?? 0) === 0)
       return false;
-    if (filters.garlic === "withoutGarlic" && hasGarlic(p.ingredients))
+    if (filters.garlic === "withoutGarlic" && (p.filters?.knoblauch ?? 0) > 0)
       return false;
 
-    if (filters.diet === "vegan" && !p.isVegan) return false;
-    if (filters.diet === "notVegan" && p.isVegan) return false;
+    if (filters.diet === "vegan" && p.filters?.dietType !== "vegan") return false;
+    if (filters.diet === "notVegan" && p.filters?.dietType === "vegan") return false;
 
     return true;
   });

@@ -256,7 +256,7 @@ export default function StaffOrdersPage() {
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto pt-[50px]">
+      <div className="max-w-7xl mx-auto pt-[130px]">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>

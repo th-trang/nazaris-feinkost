@@ -25,7 +25,7 @@ export default function HomePage() {
   ];
 
   return (
-    <div className="min-h-screen pt-[50px]">
+    <div className="min-h-screen pt-[130px]">
       {/* Hero Section - Wochenmarkt */}
       <section className="relative py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="max-w-7xl mx-auto">
@@ -174,19 +174,6 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-8 px-4 sm:px-6 lg:px-8 border-t border-gray-200/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-            <p className="text-sm text-gray-600">Nazari 2014 · All Rights Reserved</p>
-            <div className="flex space-x-6 text-sm text-gray-600">
-              <a href="#" className="hover:text-gray-900 transition-colors">{t('imprint')}</a>
-              <a href="#" className="hover:text-gray-900 transition-colors">{t('privacy')}</a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

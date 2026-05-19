@@ -45,7 +45,7 @@ export default function CateringPage() {
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-6xl mx-auto  pt-[50px]">
+      <div className="max-w-6xl mx-auto pt-[130px]">
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 mb-6">

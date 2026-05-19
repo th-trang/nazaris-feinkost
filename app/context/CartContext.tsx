@@ -9,7 +9,8 @@ export interface CartItem {
   quantity: number;
   image: string;
   category: string;
-  weightInGrams?: number; // Weight for this cart item
+  weightInGrams?: number; // Weight for this cart item (weight-based products)
+  pieces?: number;        // Number of pieces chosen (per-piece products)
   pricePerKg?: number; // Price per kg for weight-based items
   cartItemId?: string; // Unique ID for cart item (different from product ID)
 }
@@ -35,10 +36,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const addToCart = (item: Omit<CartItem, "quantity">) => {
     setCartItems((prevItems) => {
+      // Normalize: strip weightInGrams when it's 0 (per-piece items)
+      const normalizedItem = {
+        ...item,
+        weightInGrams: item.weightInGrams || undefined,
+      };
+
       // Generate unique cart item ID
-      const cartItemId = item.weightInGrams 
-        ? `${item.id}-${item.weightInGrams}` 
-        : item.id;
+      const cartItemId = normalizedItem.weightInGrams 
+        ? `${normalizedItem.id}-${normalizedItem.weightInGrams}` 
+        : normalizedItem.id;
       
       const existingItem = prevItems.find((i) => i.cartItemId === cartItemId);
       
@@ -50,7 +57,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         );
       }
       
-      return [...prevItems, { ...item, quantity: 1, cartItemId }];
+      return [...prevItems, { ...normalizedItem, quantity: 1, cartItemId }];
     });
     setIsCartOpen(true);
   };

@@ -363,7 +363,13 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="text-sm text-gray-900 truncate">{item.name}</h3>
-                        <p className="text-xs text-gray-600">{t('quantity')}: {item.quantity}</p>
+                        <p className="text-xs text-gray-600">
+                          {item.weightInGrams
+                            ? `${item.weightInGrams} ${t('grams')}`
+                            : item.pieces
+                            ? `${item.pieces} ${t('pieces')}`
+                            : `${t('quantity')}: ${item.quantity}`}
+                        </p>
                         <p className="text-sm text-gray-900 mt-1">
                           €{(item.price * item.quantity).toFixed(2)}
                         </p>

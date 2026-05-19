@@ -1,4 +1,4 @@
-export type PaymentMethod = "card" | "paypal";
+export type PaymentMethod = "card" | "paypal" | "sepa_debit";
 
 export interface OrderItemInput {
 	id: string;

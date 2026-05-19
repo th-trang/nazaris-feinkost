@@ -1,4 +1,10 @@
 {
+  "footer": {
+    "tagline": "Homemade Mediterranean specialities since 1992.",
+    "imprint": "Imprint",
+    "privacy": "Privacy Policy",
+    "copyright": "© 2014 – {year} Nazari's Feinkost. All rights reserved."
+  },
   "nav": {
     "home": "Home",
     "aboutUs": "About Us",
@@ -74,9 +80,20 @@
     "pricePerKg": "Price per kg",
     "weightInGrams": "Weight in grams",
     "weightPlaceholder": "e.g. 250",
+    "quantityInPieces": "Quantity (pieces)",
+    "quantityPlaceholder": "Select quantity",
     "price": "Price",
     "addToCart": "Add to Cart",
-    "invalidAmount": "Please enter a valid amount in grams",
+    "invalidAmount": "Please enter a valid quantity",
+    "spicy": "Spicy",
+    "mildlySpicy": "Mildly spicy",
+    "notSpicy": "Not spicy",
+    "withGarlic": "With garlic",
+    "littleGarlic": "Little garlic",
+    "noGarlic": "No garlic",
+    "pricePer100g": "Price per 100g",
+    "pricePerPiece": "Price per piece",
+    "pieces": "pcs",
     "filter": {
       "showFilter": "Show filters",
       "hideFilter": "Hide filters",
@@ -160,6 +177,8 @@
     "cashOnDelivery": "Cash on Delivery",
     "orderSummary": "Order Summary",
     "quantity": "Quantity",
+    "grams": "g",
+    "pieces": "pcs.",
     "total": "Total",
     "placeOrder": "Place Order",
     "placeOrderProcessing": "Placing order...",
@@ -199,7 +218,9 @@
     "subtotal": "Subtotal",
     "total": "Total",
     "checkout": "Checkout",
-    "continueShopping": "Continue Shopping"
+    "continueShopping": "Continue Shopping",
+    "grams": "g",
+    "pieces": "pcs."
   },
   "staffOrders": {
     "dashboardTitle": "Staff Dashboard",

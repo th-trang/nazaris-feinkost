@@ -22,7 +22,7 @@ export default function StandortePage() {
   )}&output=embed`;
 
   return (
-    <div className="min-h-screen pt-[50px]">
+    <div className="min-h-screen pt-[130px]">
       {/* Main Content */}
       <section className="py-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
