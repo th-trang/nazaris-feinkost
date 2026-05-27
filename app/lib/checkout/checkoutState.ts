@@ -1,4 +1,4 @@
-import type { CheckoutFormData } from "@/app/[locale]/checkout/useCheckout";
+import type { CheckoutFormData } from "@/app/[locale]/checkout/DTO";
 import type { CartItem } from "@/app/context/CartContext";
 
 const PREFIX = "checkout_";
