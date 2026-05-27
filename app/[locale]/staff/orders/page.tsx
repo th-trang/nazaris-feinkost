@@ -8,7 +8,7 @@ import {useTranslations} from "next-intl";
 import {watchAuthUser, isStaffUser, isAdminUser} from "@/app/lib/firebase/auth";
 import {signOut} from "firebase/auth";
 import {getFirebaseAuth} from "@/app/lib/firebase/client";
-import {getStaffOrders, markOrderCompleted, getStaffUsers, updateStaffUser, createStaffUser, deleteStaffUser, resetStaffUserPassword} from "@/app/lib/firebase/orders";
+import {getStaffOrders, markOrderCompleted, getStaffUsers} from "@/app/lib/firebase/orders";
 import {StaffOrder, StaffUser, CreateStaffUserInput} from "@/app/lib/orders/types";
 import {locations} from "@/app/data/LocationList";
 import UsersTable from "@/app/components/UserTable";
@@ -102,41 +102,41 @@ export default function StaffOrdersPage() {
     }
   };
 
-  const handleUpdateUser = async (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => {
-    try {
-      await updateStaffUser({
-        uid,
-        displayName: updates.displayName,
-        email: updates.email,
-        isAdmin: updates.isAdmin,
-      });
-      await loadUsers();
-    } catch {
-      setError(t("updateUserError"));
-    }
-  };
+  // const handleUpdateUser = async (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => {
+  //   try {
+  //     await updateStaffUser({
+  //       uid,
+  //       displayName: updates.displayName,
+  //       email: updates.email,
+  //       isAdmin: updates.isAdmin,
+  //     });
+  //     await loadUsers();
+  //   } catch {
+  //     setError(t("updateUserError"));
+  //   }
+  // };
 
-  const handleCreateUser = async (input: CreateStaffUserInput) => {
-    await createStaffUser(input);
-    await loadUsers();
-  };
+  // const handleCreateUser = async (input: CreateStaffUserInput) => {
+  //   await createStaffUser(input);
+  //   await loadUsers();
+  // };
 
-  const handleDeleteUser = async (uid: string, email: string) => {
-    try {
-      await deleteStaffUser(uid);
-      await loadUsers();
-    } catch {
-      setError(t("deleteUserError"));
-    }
-  };
+  // const handleDeleteUser = async (uid: string, email: string) => {
+  //   try {
+  //     await deleteStaffUser(uid);
+  //     await loadUsers();
+  //   } catch {
+  //     setError(t("deleteUserError"));
+  //   }
+  // };
 
-  const handleResetPassword = async (uid: string) => {
-    try {
-      await resetStaffUserPassword(uid);
-    } catch {
-      setError(t("resetPasswordError"));
-    }
-  };
+  // const handleResetPassword = async (uid: string) => {
+  //   try {
+  //     await resetStaffUserPassword(uid);
+  //   } catch {
+  //     setError(t("resetPasswordError"));
+  //   }
+  // };
 
   const handleLogout = async () => {
     try {
@@ -431,7 +431,7 @@ export default function StaffOrdersPage() {
               </button>
             </div>
 
-            <UsersTable
+            {/* <UsersTable
               users={users}
               locale={locale}
               t={t}
@@ -440,7 +440,7 @@ export default function StaffOrdersPage() {
               onDelete={handleDeleteUser}
               onResetPassword={handleResetPassword}
               isLoading={isLoadingUsers}
-            />
+            /> */}
           </>
         )}
       </div>
@@ -458,13 +458,13 @@ export default function StaffOrdersPage() {
       )}
 
       {/* Create Staff User Modal */}
-      {showCreateUserModal && (
+      {/* {showCreateUserModal && (
         <CreateStaffModal
           t={t}
           onClose={() => setShowCreateUserModal(false)}
           onCreate={handleCreateUser}
         />
-      )}
+      )} */}
     </div>
   );
 }

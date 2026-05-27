@@ -340,6 +340,10 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                       radios: true,
                       spacedAccordionItems: true,
                     },
+                    wallets: {
+                      applePay: "auto",
+                      googlePay: "auto",
+                    },
                   }}
                 />
               </div>
@@ -379,8 +383,16 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                 </div>
 
                 {/* Pricing */}
-                <div className="space-y-3 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between text-gray-700">
+                <div className="space-y-2 pt-4 border-t border-gray-200">
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>{t('netto')}</span>
+                    <span>€{(cartTotal / 1.07).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm text-gray-500">
+                    <span>{t('vat')}</span>
+                    <span>€{(cartTotal - cartTotal / 1.07).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-gray-900 font-semibold border-t border-gray-200 pt-2 mt-1">
                     <span>{t('total')}</span>
                     <span>€{cartTotal.toFixed(2)}</span>
                   </div>

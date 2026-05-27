@@ -11,6 +11,8 @@ const PAYMENT_METHOD_LABELS: Record<string, string> = {
 	card: "Karte",
 	paypal: "PayPal",
 	sepa_debit: "SEPA-Lastschrift",
+	google_pay: "Google Pay",
+	apple_pay: "Apple Pay",
 };
 
 export const onOrderPaid = onDocumentUpdated(

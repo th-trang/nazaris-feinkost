@@ -156,8 +156,16 @@ const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
 				</tr>
 				${itemRows}
 				<tr>
-					<td colspan="3" style="padding:14px 8px 14px 0;text-align:right;font-weight:bold;font-size:15px;color:#333;">Summe</td>
-					<td style="padding:14px 0 14px 8px;text-align:right;font-weight:bold;font-size:20px;color:#28a745;">&euro;${subtotal.toFixed(2)}</td>
+					<td colspan="3" style="padding:10px 8px 4px 0;text-align:right;font-size:13px;color:#888;">Nettobetrag (exkl. MwSt.)</td>
+					<td style="padding:10px 0 4px 8px;text-align:right;font-size:13px;color:#888;">&euro;${(subtotal / 1.07).toFixed(2)}</td>
+				</tr>
+				<tr>
+					<td colspan="3" style="padding:4px 8px;text-align:right;font-size:13px;color:#888;">MwSt. 7%</td>
+					<td style="padding:4px 0 4px 8px;text-align:right;font-size:13px;color:#888;">&euro;${(subtotal - subtotal / 1.07).toFixed(2)}</td>
+				</tr>
+				<tr>
+					<td colspan="3" style="padding:10px 8px 14px 0;text-align:right;font-weight:bold;font-size:15px;color:#333;border-top:1px solid #e5e7eb;">Gesamtbetrag (inkl. MwSt.)</td>
+					<td style="padding:10px 0 14px 8px;text-align:right;font-weight:bold;font-size:20px;color:#28a745;border-top:1px solid #e5e7eb;">&euro;${subtotal.toFixed(2)}</td>
 				</tr>
 			</table>
 		</td>

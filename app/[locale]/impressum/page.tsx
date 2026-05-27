@@ -7,11 +7,12 @@ export default function ImpressumPage() {
         <div className="space-y-8 text-gray-700 leading-relaxed">
 
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Angaben gemäß § 5 TMG</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Angaben gemäß § 5 DDG</h2>
             <p>Nazari&apos;s Feinkost</p>
-            <p>Inhaber: [Ihr Name]</p>
+            <p>Inhaber: [Vor- und Nachname]</p>
             <p>[Straße und Hausnummer]</p>
             <p>[PLZ] Hamburg</p>
+            <p>Deutschland</p>
           </section>
 
           <section>
@@ -20,27 +21,27 @@ export default function ImpressumPage() {
             <p>E-Mail: [E-Mail-Adresse]</p>
           </section>
 
+          {/* Nur ausfüllen, wenn USt-IdNr. vorhanden – sonst diese Section entfernen */}
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Umsatzsteuer-ID</h2>
             <p>
               Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:
             </p>
-            <p>[USt-IdNr.]</p>
+            <p>[USt-IdNr. – oder diese Section entfernen, falls nicht USt-pflichtig]</p>
           </section>
 
+          {/* Nur ausfüllen, wenn im Handelsregister eingetragen – sonst diese Section entfernen */}
           <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV
-            </h2>
-            <p>[Vor- und Nachname]</p>
-            <p>[Anschrift wie oben]</p>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Handelsregister</h2>
+            <p>Registergericht: Amtsgericht Hamburg</p>
+            <p>Registernummer: [HRA- oder HRB-Nummer – oder diese Section entfernen]</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Haftung für Inhalte</h2>
             <p>
-              Als Diensteanbieter sind wir gemäß § 7 Abs. 1 TMG für eigene Inhalte auf diesen
-              Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 TMG sind wir
+              Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte auf diesen
+              Seiten nach den allgemeinen Gesetzen verantwortlich. Nach §§ 8 bis 10 DDG sind wir
               als Diensteanbieter jedoch nicht verpflichtet, übermittelte oder gespeicherte fremde
               Informationen zu überwachen oder nach Umständen zu forschen, die auf eine
               rechtswidrige Tätigkeit hinweisen.

@@ -16,6 +16,8 @@ const PAYMENT_METHOD_MAP: Record<string, string> = {
 	card: "card",
 	paypal: "paypal",
 	sepa_debit: "sepa_debit",
+	google_pay: "google_pay",
+	apple_pay: "apple_pay",
 };
 
 export const stripeWebhook = onRequest(
