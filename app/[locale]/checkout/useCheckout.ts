@@ -271,16 +271,9 @@ export function useCheckout(
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-    if (isExpired) return;
-    setSubmitError(null);
-
-    // Validate before submission
+  const validateCheckoutForm = (): CheckoutErrors | null => {
     const newErrors: CheckoutErrors = {};
 
-    // Check required fields are not empty
     if (!formData.firstName.trim()) {
       newErrors.firstName = t("requiredField");
     } else if (!validateName(formData.firstName)) {
@@ -311,8 +304,20 @@ export function useCheckout(
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return;
+      return newErrors;
     }
+
+    setErrors({});
+    return null;
+  };
+
+  const submitAndConfirmPayment = async (): Promise<boolean> => {
+    if (!stripe || !elements) return false;
+    if (isExpired) return false;
+    setSubmitError(null);
+
+    const validationErrors = validateCheckoutForm();
+    if (validationErrors) return false;
 
     const payload: CreateOrderInput = {
       firstName: formData.firstName.trim(),
@@ -355,7 +360,7 @@ export function useCheckout(
           }),
         });
       }
-      
+
       const origin = window.location.origin;
       const localeParam = Array.isArray(params.locale) ? params.locale[0] : params.locale;
 
@@ -375,7 +380,7 @@ export function useCheckout(
       if (error) {
         onPaymentFailed?.();
         setSubmitError(error.message || t("orderFailed"));
-        return;
+        return false;
       }
 
       // Payment succeeded without redirect — clean up saved state
@@ -385,11 +390,27 @@ export function useCheckout(
       setOrderNumber(currentOrderNumber);
       setIsSubmitted(true);
       clearCart();
+      return true;
     } catch {
       setSubmitError(t("orderFailed"));
+      return false;
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleExpressCheckoutConfirm = async (event: any) => {
+    const success = await submitAndConfirmPayment();
+    if (success) {
+      event.resolve?.();
+      return;
+    }
+    event.reject?.();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitAndConfirmPayment();
   };
 
   return {
@@ -414,6 +435,7 @@ export function useCheckout(
     setAvailableLocations,
     handleChange,
     handleSubmit,
+    handleExpressCheckoutConfirm,
     setPickupDate,
   };
 }

@@ -4,7 +4,7 @@ import { getHoursForDay } from "@/app/data/LocationList";
 import DatePicker from "@/app/components/DatePicker";
 import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
 import InputField from "@/app/components/InputField";
-import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
+import { useStripe, useElements, PaymentElement, ExpressCheckoutElement } from "@stripe/react-stripe-js";
 
 // const formatTimeRemaining = (ms: number): string => {
 //   const minutes = Math.floor(ms / 60000);
@@ -36,6 +36,7 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
     isExpired,
     handleChange,
     handleSubmit,
+    handleExpressCheckoutConfirm,
     setPickupDate,
   } = useCheckout(stripe, elements, paymentIntentId, expiresAt, onSuccess, onPaymentFailed);
 
@@ -329,6 +330,24 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                   <h2 className="text-2xl text-gray-900">{t('paymentMethod')}</h2>
                 </div>
 
+                <div className="mb-6">
+                  <ExpressCheckoutElement
+                    onConfirm={(event) => {
+                      void handleExpressCheckoutConfirm(event as any);
+                    }}
+                    options={{
+                      buttonType: {
+                        applePay: "buy",
+                        googlePay: "buy",
+                      },
+                      paymentMethods: {
+                        applePay: "auto",
+                        googlePay: "auto",
+                      },
+                    }}
+                  />
+                </div>
+
                 {/* Customise the Payment Element layout via the `layout` option.
                     Supported types: "accordion" | "tabs" | "auto"
                     @see https://docs.stripe.com/elements/payment-element#layout */}
@@ -340,10 +359,10 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                       radios: true,
                       spacedAccordionItems: true,
                     },
-                    wallets: {
-                      applePay: "auto",
-                      googlePay: "auto",
-                    },
+                    // wallets: {
+                    //   applePay: "auto",
+                    //   googlePay: "auto",
+                    // },
                   }}
                 />
               </div>
