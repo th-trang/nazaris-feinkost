@@ -1,5 +1,5 @@
-import type { CheckoutFormData } from "@/app/[locale]/checkout/DTO";
-import type { CartItem } from "@/app/context/CartContext";
+import { CartItem } from "@/app/context/CartContext";
+import type { CheckoutFormData } from "@/app/DTO/DTO";
 
 const PREFIX = "checkout_";
 const TTL_MS = 24 * 60 * 60 * 1000; // 24 hours

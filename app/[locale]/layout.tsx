@@ -3,6 +3,7 @@ import { getMessages } from "next-intl/server";
 import ClientLayout from "./ClientLayout";
 import { CartProvider } from "../context/CartContext";
 import { CartSidebar } from "../components/CartSidebar";
+import PromoBanner from "../components/PromoBanner";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
 
@@ -19,6 +20,7 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages} locale={locale}>
             <CartProvider>
                 <div className="flex flex-col min-h-screen">
+                    <PromoBanner />
                     <Header />
                     <ClientLayout params={{ locale }}>
                         <main className="flex-1">

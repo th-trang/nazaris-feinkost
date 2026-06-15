@@ -1,4 +1,4 @@
-import { Product } from "@/app/data/ProductList";
+import { Product } from "@/app/DTO/ProductListDTO";
 import { Timestamp } from "firebase/firestore";
 
 // ─── Filter State ─────────────────────────────────────────────────────────────

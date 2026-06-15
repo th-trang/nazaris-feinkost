@@ -1,18 +1,14 @@
 import { useCheckout } from "./useCheckout";
-import { CreditCard, MapPin, User, Mail, Phone, CheckCircle, Clock, Loader2, AlertTriangle } from "lucide-react";
-import { getHoursForDay } from "@/app/data/LocationList";
-import DatePicker from "@/app/components/DatePicker";
-import DropdownList, { DropdownOption } from "@/app/components/DropdownList";
-import InputField from "@/app/components/InputField";
+import { useCart } from "@/app/context/CartContext";
+import { CreditCard, CheckCircle, AlertTriangle } from "lucide-react";
 import { useStripe, useElements, PaymentElement, ExpressCheckoutElement } from "@stripe/react-stripe-js";
-
-// const formatTimeRemaining = (ms: number): string => {
-//   const minutes = Math.floor(ms / 60000);
-//   const seconds = Math.floor((ms % 60000) / 1000);
-//   return `${minutes}:${seconds.toString().padStart(2, "0")}`;
-// };
+import { useLocale } from "next-intl";
+import OrderSummary from "@/app/components/OrderSummary";
+import { ContactInformationForm } from "@/app/components/ContactInformationForm";
+import PickupForm from "@/app/components/PickupForm";
 
 export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentFailed }: { paymentIntentId: string | null; expiresAt: string | null; onSuccess?: () => void; onPaymentFailed?: () => void }) {
+  const locale = useLocale();
   const stripe = useStripe();
   const elements = useElements();
   const {
@@ -25,20 +21,21 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
     orderNumber,
     cartItems,
     cartTotal,
+    cartPricingError,
     isStripeReturnRedirect,
     availableLocations,
     selectedDayName,
     selectedLocation,
     setAvailableLocations,
-    tomorrowStr,
     tomorrow,
-    timeRemaining,
     isExpired,
     handleChange,
     handleSubmit,
     handleExpressCheckoutConfirm,
     setPickupDate,
   } = useCheckout(stripe, elements, paymentIntentId, expiresAt, onSuccess, onPaymentFailed);
+
+  const { appliedCombos, comboSavings, cartSubtotal } = useCart();
 
   // Show nothing while redirecting
   if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
@@ -76,7 +73,7 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                 {t('pickupOn')}{" "}
                 {new Date(
                   formData.pickupDate,
-                ).toLocaleDateString("de-DE", {
+                ).toLocaleDateString(locale, {
                   weekday: "long",
                   year: "numeric",
                   month: "long",
@@ -130,18 +127,6 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                 {t('completeOrder')}
               </p>
             </div>
-            {/* {timeRemaining !== null && timeRemaining > 0 && (
-              <div className={`flex items-center gap-2 px-4 py-2 rounded-xl border text-sm font-medium shrink-0 ${
-                timeRemaining < 2 * 60 * 1000
-                  ? "bg-red-50 border-red-200 text-red-700"
-                  : timeRemaining < 5 * 60 * 1000
-                    ? "bg-amber-50 border-amber-200 text-amber-700"
-                    : "bg-green-50 border-green-200 text-green-700"
-              }`}>
-                <Clock className="w-4 h-4" />
-                <span>{t("sessionCountdown", { time: formatTimeRemaining(timeRemaining) })}</span>
-              </div>
-            )} */}
           </div>
         </div>
 
@@ -150,176 +135,28 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
             {/* Left Column - Forms */}
             <div className="lg:col-span-2 space-y-8">
               {/* Contact Information */}
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <User className="w-5 h-5 text-green-600" />
-                  </div>
-                  <h2 className="text-2xl text-gray-900">{t('contactInfo')}</h2>
-                </div>
+              <ContactInformationForm 
+                firstName={formData.firstName}
+                lastName={formData.lastName}
+                email={formData.email}
+                phone={formData.phone}
+                errors={errors}
+                onChange={handleChange}
+              />
 
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <InputField
-                    id="firstName"
-                    name="firstName"
-                    label={t('firstName')}
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    required
-                    error={errors.firstName}
-                  />
-
-                  <InputField
-                    id="lastName"
-                    name="lastName"
-                    label={t('lastName')}
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    required
-                    error={errors.lastName}
-                  />
-
-                  <InputField
-                    id="email"
-                    name="email"
-                    label={t('email')}
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    error={errors.email}
-                    icon={Mail}
-                  />
-
-                  <InputField
-                    id="phone"
-                    name="phone"
-                    label={t('phone')}
-                    type="tel"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    required
-                    placeholder="+49 123 456789"
-                    error={errors.phone}
-                    icon={Phone}
-                  />
-                </div>
-              </div>
-
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                    <MapPin className="w-5 h-5 text-green-600" />
-                  </div>
-                  <h2 className="text-2xl text-gray-900">
-                    {t('pickup')}
-                  </h2>
-                </div>
-
-                <div className="space-y-4">
-                  {/* Date Picker */}
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-2">
-                      {t('pickupDate')} *
-                    </label>
-                    <DatePicker
-                      value={formData.pickupDate}
-                      onChange={setPickupDate}
-                      minDate={tomorrow}
-                    />
-                    <p className="text-xs text-gray-500 mt-2">
-                      {t('selectedDay')}: <span className="font-medium text-green-600">{selectedDayName}</span>
-                    </p>
-                  </div>
-
-                  {/* Location Selection */}
-                  <div>
-                    <label
-                      htmlFor="pickupLocation"
-                      className="block text-sm text-gray-700 mb-2"
-                    >
-                      {t('pickupLocation')} *
-                    </label>
-
-                    {availableLocations.length === 0 ? (
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-xl">
-                        <p className="text-sm text-red-800">
-                          {t('noLocationsAvailable')}
-                        </p>
-                      </div>
-                    ) : (
-                      <>
-                        <DropdownList
-                          value={formData.pickupLocation}
-                          onChange={(value) => handleChange({ target: { name: 'pickupLocation', value } } as React.ChangeEvent<HTMLInputElement>)}
-                          options={availableLocations.map((location): DropdownOption => ({
-                            value: location.name,
-                            label: location.name,
-                          }))}
-                          placeholder={t('pleaseSelect')}
-                          icon={MapPin}
-                          headerTitle={t('pickupLocation')}
-                        />
-                        {errors.pickupLocation && (
-                          <p className="mt-1 text-sm text-red-500">{errors.pickupLocation}</p>
-                        )}
-                      </>
-                    )}
-
-                    {/* Show opening hours for selected location */}
-                    {selectedLocation && (
-                      <div className="mt-3 p-4 bg-green-50 border border-green-200 rounded-xl">
-                        <div className="space-y-3">
-                          {/* Address */}
-                          <div className="flex items-start space-x-2">
-                            <MapPin className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <div className="text-sm">
-                              <p className="font-medium text-green-900">{t('address')}</p>
-                              <p className="text-green-700">{selectedLocation.address}</p>
-                              <p className="text-green-700">{selectedLocation.city}</p>
-                            </div>
-                          </div>
-                          {/* Opening Hours */}
-                          <div className="flex items-start space-x-2">
-                            <Clock className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                            <div className="text-sm">
-                              <p className="font-medium text-green-900">
-                                {t('openingHoursOn')}{" "}
-                                {selectedDayName}:
-                              </p>
-                              <p className="text-green-700">
-                                {getHoursForDay(
-                                  selectedLocation,
-                                  selectedDayName,
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Special Requests */}
-                  <div>
-                    <label
-                      htmlFor="specialRequests"
-                      className="block text-sm text-gray-700 mb-2"
-                    >
-                      {t('specialRequests')}
-                    </label>
-                    <textarea
-                      id="specialRequests"
-                      name="specialRequests"
-                      value={formData.specialRequests}
-                      onChange={handleChange}
-                      rows={3}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all resize-none"
-                      placeholder={t('specialRequestsPlaceholder')}
-                    />
-                  </div>
-                </div>
-              </div>
+              <PickupForm
+                pickupDate={formData.pickupDate}
+                pickupLocation={formData.pickupLocation}
+                availableLocations={availableLocations}
+                selectedDayName={selectedDayName}
+                selectedLocation={selectedLocation}
+                errors={errors}
+                setPickupDate={setPickupDate}
+                handleChange={handleChange}
+                tomorrow={tomorrow}
+                specialRequests={formData.specialRequests}
+                onChange={handleChange}
+              />
 
               {/* Payment Method – Stripe Payment Element */}
               <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 lg:p-8 shadow-lg border border-gray-100">
@@ -359,10 +196,6 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                       radios: true,
                       spacedAccordionItems: true,
                     },
-                    // wallets: {
-                    //   applePay: "auto",
-                    //   googlePay: "auto",
-                    // },
                   }}
                 />
               </div>
@@ -370,70 +203,17 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
 
             {/* Right Column - Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-gray-100 sticky top-24">
-                <h2 className="text-2xl text-gray-900 mb-6">{t('orderSummary')}</h2>
-
-                {/* Cart Items */}
-                <div className="space-y-3 mb-6 max-h-64 overflow-y-auto">
-                  {cartItems.map((item) => (
-                    <div key={item.id} className="flex gap-3 py-3">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                        <img
-                          src={item.image}
-                          alt={item.name}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-sm text-gray-900 truncate">{item.name}</h3>
-                        <p className="text-xs text-gray-600">
-                          {item.weightInGrams
-                            ? `${item.weightInGrams} ${t('grams')}`
-                            : item.pieces
-                            ? `${item.pieces} ${t('pieces')}`
-                            : `${t('quantity')}: ${item.quantity}`}
-                        </p>
-                        <p className="text-sm text-gray-900 mt-1">
-                          €{(item.price * item.quantity).toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Pricing */}
-                <div className="space-y-2 pt-4 border-t border-gray-200">
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>{t('netto')}</span>
-                    <span>€{(cartTotal / 1.07).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-sm text-gray-500">
-                    <span>{t('vat')}</span>
-                    <span>€{(cartTotal - cartTotal / 1.07).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between text-gray-900 font-semibold border-t border-gray-200 pt-2 mt-1">
-                    <span>{t('total')}</span>
-                    <span>€{cartTotal.toFixed(2)}</span>
-                  </div>
-                </div>
-
-                {/* Submit Button */}
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !stripe || !elements}
-                  className="w-full mt-6 py-4 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isSubmitting ? t('placeOrderProcessing') : t('placeOrder')}
-                </button>
-
-                {submitError && (
-                  <p className="text-sm text-red-600 text-center mt-3">{submitError}</p>
-                )}
-
-                <p className="text-xs text-gray-600 text-center mt-4">
-                  {t('termsNotice')}
-                </p>
-              </div>
+              <OrderSummary
+                isSubmitting={isSubmitting}
+                submitError={submitError}
+                cartItems={cartItems}
+                cartTotal={cartTotal}
+                cartPricingError={cartPricingError}
+                appliedCombos={appliedCombos}
+                comboSavings={comboSavings}
+                cartSubtotal={cartSubtotal}
+                onSubmit={handleSubmit}
+              />
             </div>
           </div>
         </form>

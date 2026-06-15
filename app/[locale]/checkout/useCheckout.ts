@@ -10,8 +10,8 @@ import { CreateOrderInput } from "@/app/lib/orders/types";
 import {saveCheckoutState, buildReturnUrl, restoreCheckoutState, clearCheckoutState, getCheckoutStateKey} from "@/app/lib/checkout/checkoutState";
 import type { Stripe, StripeElements } from "@stripe/stripe-js";
 import { validateName, validatePhone, validateEmail } from "./useValidation";
-import { CheckoutErrors, CheckoutFormData } from "./DTO";
 import { isSepaAllowedForPickupDate } from "@/app/lib/helper/Utils";
+import { CheckoutErrors, CheckoutFormData } from "@/app/DTO/DTO";
 
 export function useCheckout(
   stripe: Stripe | null,
@@ -30,7 +30,14 @@ export function useCheckout(
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-  const { cartItems, cartTotal, clearCart, restoreCart } = useCart();
+  const {
+    cartItems,
+    cartTotal,
+    cartPricingBreakdown,
+    cartPricingError,
+    clearCart,
+    restoreCart,
+  } = useCart();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -85,25 +92,6 @@ export function useCheckout(
       console.error("Failed to cancel expired PaymentIntent", err);
     }
   }, [paymentIntentId]);
-
-  // useEffect(() => {
-  //   if (!expiresAt) return;
-
-  //   const updateTimer = () => {
-  //     const remaining = new Date(expiresAt).getTime() - Date.now();
-  //     if (remaining <= 0) {
-  //       setTimeRemaining(0);
-  //       setIsExpired(true);
-  //       cancelPaymentIntent();
-  //     } else {
-  //       setTimeRemaining(remaining);
-  //     }
-  //   };
-
-  //   updateTimer();
-  //   const interval = setInterval(updateTimer, 1000);
-  //   return () => clearInterval(interval);
-  // }, [expiresAt, cancelPaymentIntent]);
 
   const [availableLocations, setAvailableLocations] = useState(() => {
     return getLocationsForDate(tomorrow);
@@ -316,6 +304,11 @@ export function useCheckout(
     if (isExpired) return false;
     setSubmitError(null);
 
+    if (cartPricingError) {
+      setSubmitError(cartPricingError);
+      return false;
+    }
+
     const validationErrors = validateCheckoutForm();
     if (validationErrors) return false;
 
@@ -423,6 +416,8 @@ export function useCheckout(
     orderNumber,
     cartItems,
     cartTotal,
+    cartPricingBreakdown,
+    cartPricingError,
     isStripeReturnRedirect,
     availableLocations,
     selectedDayName,
