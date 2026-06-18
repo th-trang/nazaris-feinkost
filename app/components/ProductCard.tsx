@@ -2,7 +2,7 @@
 
 import { Clock, Flame, Plus, Scale } from "lucide-react";
 import { useParams } from "next/navigation";
-import { Product } from "@/app/data/ProductList";
+import { Product } from "@/app/DTO/ProductListDTO";
 import DropdownList, { DropdownOption } from "./DropdownList";
 import { getMhdLabel } from "@/app/[locale]/products/filterProduct";
 

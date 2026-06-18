@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import { useTranslations } from 'next-intl';
-import { Product } from "@/app/data/ProductList";
+import { Product } from "@/app/DTO/ProductListDTO";
 import { fetchAllProducts } from "@/app/lib/firebase/products";
 import ProductCard from "@/app/components/ProductCard";
 import ProductFilterPanel, { ProductFilters, DEFAULT_FILTERS } from "@/app/components/ProductFilterPanel";
@@ -25,7 +25,7 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchAllProducts()
       .then((data) => {
-        // console.log('[products] fetched:', data.length, data);
+        console.log('[products] fetched:', data.length, data);
         setProducts(data);
       })
       .catch((err) => {
@@ -87,9 +87,10 @@ export default function ProductsPage() {
       price: price,
       image: product.imageUrl ?? "",
       category: getTranslatedCategory(product.categoryName),
+      pricingUnit: product.priceUnit === "100g" ? "per_100g" : "per_item",
       weightInGrams: product.priceUnit === "100g" ? quantity : 0,
       pieces: product.priceUnit !== "100g" ? quantity : undefined,
-      pricePerKg: product.priceUnit === "100g" ? product.price * 10 : product.price,
+      pricePer100g: product.priceUnit === "100g" ? product.price : undefined,
     });
 
     // Clear the input after adding to cart
@@ -98,7 +99,7 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto pt-[50px]">
+      <div className="max-w-7xl mx-auto pt-[130px]">
         {/* Header */}
         <div className="text-center mb-12">
           <div className="inline-flex items-center space-x-2 px-4 py-2 bg-white/80 backdrop-blur-sm rounded-full border border-gray-200 mb-6">

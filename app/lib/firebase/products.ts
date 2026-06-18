@@ -1,5 +1,5 @@
 import { collection, getDocs, orderBy, query } from "firebase/firestore";
-import { Product } from "@/app/data/ProductList";
+import { Product } from "@/app/DTO/ProductListDTO";
 import { getFirebaseDb } from "./client";
 
 export async function fetchAllProducts(): Promise<Product[]> {

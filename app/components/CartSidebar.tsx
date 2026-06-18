@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Trash2, Tag, ChevronRight } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -13,8 +13,13 @@ export function CartSidebar() {
     setIsCartOpen,
     updateQuantity,
     removeFromCart,
+    cartSubtotal,
     cartTotal,
+    cartTotalWithCombos,
     cartCount,
+    comboSavings,
+    comboUpsells,
+    appliedCombos,
   } = useCart();
 
   return (
@@ -22,14 +27,14 @@ export function CartSidebar() {
       {/* Overlay */}
       {isCartOpen && (
         <div
-          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9998] transition-opacity"
           onClick={() => setIsCartOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-[#f5f3e8] shadow-2xl z-50 transform transition-transform duration-300 ${
+        className={`fixed top-0 right-0 h-full w-full sm:w-96 bg-[#f5f3e8] shadow-2xl z-[9999] transform transition-transform duration-300 ${
           isCartOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -74,7 +79,17 @@ export function CartSidebar() {
               </div>
             ) : (
               <div className="space-y-4">
-                {cartItems.map((item) => (
+                {cartItems.map((item) => {
+                  const isWeightBased = !!item.weightInGrams;
+                  const isPieceBased = !item.weightInGrams && !!item.pieces;
+                  const controlValue = isPieceBased ? item.pieces! : item.quantity;
+                  const unitPrice = isPieceBased && item.pieces
+                    ? item.price / item.pieces
+                    : isWeightBased && item.weightInGrams
+                      ? (item.pricePer100g ?? item.price / (item.weightInGrams / 100))
+                      : item.price;
+
+                  return (
                   <div
                     key={item.cartItemId || item.id}
                     className="bg-white/80 rounded-xl p-4 shadow-md border border-gray-100"
@@ -96,13 +111,9 @@ export function CartSidebar() {
                           <p className="text-xs text-green-700 font-medium mb-1">
                             {item.weightInGrams} {t('grams')}
                           </p>
-                        ) : item.pieces ? (
-                          <p className="text-xs text-green-700 font-medium mb-1">
-                            {item.pieces} {t('pieces')}
-                          </p>
                         ) : null}
                         <p className="text-sm text-gray-600 mb-2">
-                          €{item.price.toFixed(2)}
+                          €{unitPrice.toFixed(2)}{isWeightBased ? ` / ${t('per100g')}` : ""}
                         </p>
 
                         {/* Quantity Controls — only for per-piece items */}
@@ -110,16 +121,16 @@ export function CartSidebar() {
                           {!item.weightInGrams ? (
                             <div className="flex items-center space-x-2 bg-gray-100 rounded-lg p-1">
                               <button
-                                onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity - 1)}
+                                onClick={() => updateQuantity(item.cartItemId || item.id, controlValue - 1)}
                                 className="p-1 hover:bg-gray-200 rounded transition-colors"
                               >
                                 <Minus className="w-4 h-4 text-gray-700" />
                               </button>
                               <span className="w-8 text-center text-gray-900">
-                                {item.quantity}
+                                {controlValue}
                               </span>
                               <button
-                                onClick={() => updateQuantity(item.cartItemId || item.id, item.quantity + 1)}
+                                onClick={() => updateQuantity(item.cartItemId || item.id, controlValue + 1)}
                                 className="p-1 hover:bg-gray-200 rounded transition-colors"
                               >
                                 <Plus className="w-4 h-4 text-gray-700" />
@@ -147,6 +158,55 @@ export function CartSidebar() {
                       </span>
                     </div>
                   </div>
+                );
+                })}
+                {/* Upsell nudges */}
+                {comboUpsells.map((upsell) => (
+                  <div
+                    key={upsell.key}
+                    className="flex items-center gap-3 bg-[#FFF44F]/60 border border-[#FFF44F] rounded-xl px-4 py-3"
+                  >
+                    <Tag className="w-4 h-4 text-yellow-700 flex-shrink-0" />
+                    <p className="text-sm text-yellow-900 flex-1">
+                      {t('comboUpsell', {
+                        needed: upsell.needed,
+                        name: t(upsell.key === 'borek' ? 'comboNameBorek' : 'comboNameRolle'),
+                        price: upsell.comboPrice.toFixed(2),
+                      })}
+                    </p>
+                    <Link
+                      href="/products"
+                      onClick={() => setIsCartOpen(false)}
+                      className="flex-shrink-0"
+                    >
+                      <ChevronRight className="w-4 h-4 text-yellow-700" />
+                    </Link>
+                  </div>
+                ))}
+
+                {/* Active combo savings */}
+                {appliedCombos.map((combo) => (
+                  <div
+                    key={combo.productId}
+                    className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3"
+                  >
+                    <Tag className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-green-800">
+                        {t('comboAppliedLabel', {
+                          bundleSize: 3,
+                          name: t(combo.key === 'borek' ? 'comboNameBorek' : 'comboNameRolle'),
+                        })}
+                        {combo.comboCount > 1 && ` ×${combo.comboCount}`}
+                      </p>
+                      <p className="text-xs text-green-700">
+                        {t('comboSavingsLine', { amount: combo.totalSavings.toFixed(2) })}
+                      </p>
+                    </div>
+                    <span className="text-sm font-semibold text-green-700">
+                      −€{combo.totalSavings.toFixed(2)}
+                    </span>
+                  </div>
                 ))}
               </div>
             )}
@@ -155,19 +215,34 @@ export function CartSidebar() {
           {/* Footer - Total & Checkout */}
           {cartItems.length > 0 && (
             <div className="border-t border-gray-200 p-6 bg-white/60 backdrop-blur-sm">
-              {/* Total */}
-              <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
-                <span className="text-lg text-gray-900">{t('total')}:</span>
-                <span className="text-2xl text-gray-900">
-                  €{cartTotal.toFixed(2)}
-                </span>
-              </div>
+              {comboSavings > 0 ? (
+                <div className="mb-4 pb-4 border-b border-gray-200 space-y-2">
+                  <div className="flex justify-between items-center text-sm text-gray-600">
+                    <span>{t('subtotal')}</span>
+                    <span>€{cartSubtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-sm text-green-700">
+                    <span>{t('comboDiscount')}</span>
+                    <span>−€{comboSavings.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-xl">
+                    <span className="text-gray-900">{t('total')}:</span>
+                    <span className="text-gray-900">€{cartTotalWithCombos.toFixed(2)}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+                  <span className="text-lg text-gray-900">{t('total')}:</span>
+                  <span className="text-2xl text-gray-900">€{cartTotal.toFixed(2)}</span>
+                </div>
+              )}
 
               {/* Checkout Button */}
               <Link
                 href="/checkout"
                 onClick={() => setIsCartOpen(false)}
-                className="block w-full py-4 bg-green-600 text-white text-center rounded-xl hover:bg-green-700 transition-all shadow-lg hover:shadow-xl"
+                className={`block w-full py-4 text-white text-center rounded-xl transition-all shadow-lg hover:shadow-xl 
+                   bg-green-600 hover:bg-green-700`}
               >
                 {t('checkout')}
               </Link>

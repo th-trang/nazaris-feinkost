@@ -10,8 +10,8 @@ import { CreateOrderInput } from "@/app/lib/orders/types";
 import {saveCheckoutState, buildReturnUrl, restoreCheckoutState, clearCheckoutState, getCheckoutStateKey} from "@/app/lib/checkout/checkoutState";
 import type { Stripe, StripeElements } from "@stripe/stripe-js";
 import { validateName, validatePhone, validateEmail } from "./useValidation";
-import { CheckoutErrors, CheckoutFormData } from "./DTO";
 import { isSepaAllowedForPickupDate } from "@/app/lib/helper/Utils";
+import { CheckoutErrors, CheckoutFormData } from "@/app/DTO/DTO";
 
 export function useCheckout(
   stripe: Stripe | null,
@@ -30,7 +30,14 @@ export function useCheckout(
   tomorrow.setDate(tomorrow.getDate() + 1);
   const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-  const { cartItems, cartTotal, clearCart, restoreCart } = useCart();
+  const {
+    cartItems,
+    cartTotal,
+    cartPricingBreakdown,
+    cartPricingError,
+    clearCart,
+    restoreCart,
+  } = useCart();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -85,25 +92,6 @@ export function useCheckout(
       console.error("Failed to cancel expired PaymentIntent", err);
     }
   }, [paymentIntentId]);
-
-  // useEffect(() => {
-  //   if (!expiresAt) return;
-
-  //   const updateTimer = () => {
-  //     const remaining = new Date(expiresAt).getTime() - Date.now();
-  //     if (remaining <= 0) {
-  //       setTimeRemaining(0);
-  //       setIsExpired(true);
-  //       cancelPaymentIntent();
-  //     } else {
-  //       setTimeRemaining(remaining);
-  //     }
-  //   };
-
-  //   updateTimer();
-  //   const interval = setInterval(updateTimer, 1000);
-  //   return () => clearInterval(interval);
-  // }, [expiresAt, cancelPaymentIntent]);
 
   const [availableLocations, setAvailableLocations] = useState(() => {
     return getLocationsForDate(tomorrow);
@@ -271,16 +259,9 @@ export function useCheckout(
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-    if (isExpired) return;
-    setSubmitError(null);
-
-    // Validate before submission
+  const validateCheckoutForm = (): CheckoutErrors | null => {
     const newErrors: CheckoutErrors = {};
 
-    // Check required fields are not empty
     if (!formData.firstName.trim()) {
       newErrors.firstName = t("requiredField");
     } else if (!validateName(formData.firstName)) {
@@ -311,8 +292,25 @@ export function useCheckout(
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-      return;
+      return newErrors;
     }
+
+    setErrors({});
+    return null;
+  };
+
+  const submitAndConfirmPayment = async (): Promise<boolean> => {
+    if (!stripe || !elements) return false;
+    if (isExpired) return false;
+    setSubmitError(null);
+
+    if (cartPricingError) {
+      setSubmitError(cartPricingError);
+      return false;
+    }
+
+    const validationErrors = validateCheckoutForm();
+    if (validationErrors) return false;
 
     const payload: CreateOrderInput = {
       firstName: formData.firstName.trim(),
@@ -355,7 +353,7 @@ export function useCheckout(
           }),
         });
       }
-      
+
       const origin = window.location.origin;
       const localeParam = Array.isArray(params.locale) ? params.locale[0] : params.locale;
 
@@ -375,7 +373,7 @@ export function useCheckout(
       if (error) {
         onPaymentFailed?.();
         setSubmitError(error.message || t("orderFailed"));
-        return;
+        return false;
       }
 
       // Payment succeeded without redirect — clean up saved state
@@ -385,11 +383,27 @@ export function useCheckout(
       setOrderNumber(currentOrderNumber);
       setIsSubmitted(true);
       clearCart();
+      return true;
     } catch {
       setSubmitError(t("orderFailed"));
+      return false;
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleExpressCheckoutConfirm = async (event: any) => {
+    const success = await submitAndConfirmPayment();
+    if (success) {
+      event.resolve?.();
+      return;
+    }
+    event.reject?.();
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await submitAndConfirmPayment();
   };
 
   return {
@@ -402,6 +416,8 @@ export function useCheckout(
     orderNumber,
     cartItems,
     cartTotal,
+    cartPricingBreakdown,
+    cartPricingError,
     isStripeReturnRedirect,
     availableLocations,
     selectedDayName,
@@ -414,6 +430,7 @@ export function useCheckout(
     setAvailableLocations,
     handleChange,
     handleSubmit,
+    handleExpressCheckoutConfirm,
     setPickupDate,
   };
 }

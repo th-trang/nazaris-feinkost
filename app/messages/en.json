@@ -14,6 +14,9 @@
     "staff": "Staff",
     "language": "Language"
   },
+  "banner": {
+    "message": "Special offer: Choose any 3 Börek for only 5€ or any 3 rolls for just 9€."
+  },
   "home": {
     "freshFromMarket": "Fresh from the Weekly Market",
     "weeklyMarket": "Weekly Market",
@@ -179,6 +182,17 @@
     "quantity": "Quantity",
     "grams": "g",
     "pieces": "pcs.",
+    "borekTotal": "Boerek",
+    "rolleTotal": "Rolle",
+    "weightItemsTotal": "Weight-based items",
+    "bundleCount": "Bundles",
+    "leftovers": "Leftovers",
+    "subtotal": "Subtotal",
+    "comboDiscount": "Combo discount",
+    "comboNameBorek": "Boerek",
+    "comboNameRolle": "Roll",
+    "comboAppliedLabel": "{bundleSize}x {name} combo",
+    "comboSavingsMessage": "You save EUR {amount} with combo deals",
     "netto": "Net amount (excl. VAT)",
     "vat": "VAT 7%",
     "total": "Total (incl. VAT)",
@@ -219,10 +233,22 @@
     "toMenu": "Go to Menu",
     "subtotal": "Subtotal",
     "total": "Total",
+    "comboDiscount": "Combo discount",
     "checkout": "Checkout",
     "continueShopping": "Continue Shopping",
     "grams": "g",
-    "pieces": "pcs."
+    "per100g": "100g",
+    "pieces": "pcs.",
+    "borekTotal": "Boerek",
+    "rolleTotal": "Rolle",
+    "weightItemsTotal": "Weight-based items",
+    "bundleCount": "Bundles",
+    "leftovers": "Leftovers",
+    "comboNameBorek": "Boerek",
+    "comboNameRolle": "Roll",
+    "comboAppliedLabel": "{bundleSize}x {name} combo",
+    "comboSavingsLine": "You save EUR {amount}",
+    "comboUpsell": "Add {needed}x {name} for the combo deal (3 for EUR {price})"
   },
   "staffOrders": {
     "dashboardTitle": "Staff Dashboard",

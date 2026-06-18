@@ -8,7 +8,7 @@ import StripeProvider from "@/app/components/StripeProvider";
 import { CheckoutForm } from "./CheckoutForm";
 
 export default function CheckoutPage() {
-  const { cartItems, cartTotal } = useCart();
+  const { cartItems, cartTotal, cartPricingError } = useCart();
   const searchParams = useSearchParams();
   const params = useParams<{ locale?: string }>();
   const router = useRouter();
@@ -26,12 +26,22 @@ export default function CheckoutPage() {
   const isStripeReturn = !!redirectStatus || !!returnClientSecret || !!oldStripeStatus || !!refKey;
 
   useEffect(() => {
+    if (isCheckoutComplete) return;
+
     if (returnClientSecret) {
       setClientSecret(returnClientSecret);
       return;
     }
 
-    if (cartTotal <= 0) return;
+    if (cartPricingError) {
+      setInitError(cartPricingError);
+      return;
+    }
+
+    if (!isStripeReturn && cartTotal <= 0) {
+      setInitError("Cart total must be greater than zero.");
+      return;
+    }
 
     const controller = new AbortController();
 
@@ -64,7 +74,7 @@ export default function CheckoutPage() {
       });
 
     return () => controller.abort();
-  }, [cartTotal, returnClientSecret, retryKey]);
+  }, [cartPricingError, cartTotal, isStripeReturn, isCheckoutComplete, returnClientSecret, retryKey]);
 
   useEffect(() => {
     if (cartItems.length === 0 && !isStripeReturn && !isCheckoutComplete) {

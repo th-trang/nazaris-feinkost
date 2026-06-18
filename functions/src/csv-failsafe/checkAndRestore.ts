@@ -1,13 +1,14 @@
+import {createHash} from "crypto";
 import {existsSync, readFileSync} from "fs";
 import {resolve} from "path";
-import {getFirestore} from "firebase-admin/firestore";
+import {getFirestore, Timestamp} from "firebase-admin/firestore";
 import {getStorage} from "firebase-admin/storage";
 import {onRequest} from "firebase-functions/v2/https";
 import {onSchedule} from "firebase-functions/v2/scheduler";
 import {defineSecret} from "firebase-functions/params";
 import Papa from "papaparse";
 import {csvRowToProduct} from "./mappers.js";
-import type {CsvRow} from "./mappers.js";
+import type {CsvRow, ProductDocument} from "./mappers.js";
 import {slugify} from "./slugify.js";
 
 const restoreToken = defineSecret("RESTORE_TOKEN");
@@ -20,15 +21,123 @@ const FUNCTION_OPTIONS = {
 
 const CSV_STORAGE_PATH = "backups/products.csv";
 const BATCH_SIZE = 499;
+const META_DOC = "_meta/csvSync";
 
 interface RestoreResult {
   restored: boolean;
   count: number;
   skipped: number;
+  mode?: "full" | "delta" | "skipped";
+}
+
+// ─── Hash helpers ─────────────────────────────────────────────────────────────
+
+function computeCsvHash(csvString: string): string {
+  return createHash("sha256").update(csvString).digest("hex");
+}
+
+async function getStoredHash(db: ReturnType<typeof getFirestore>): Promise<string | null> {
+  const snap = await db.doc(META_DOC).get();
+  return snap.exists ? ((snap.data()?.csvHash as string | undefined) ?? null) : null;
+}
+
+async function saveHash(db: ReturnType<typeof getFirestore>, csvHash: string): Promise<void> {
+  await db.doc(META_DOC).set({csvHash, lastSynced: Timestamp.now()});
+}
+
+// ─── Delta sync ───────────────────────────────────────────────────────────────
+
+async function runDeltaSync(
+  db: ReturnType<typeof getFirestore>,
+  rows: CsvRow[],
+  categoryIds: Map<string, string>,
+): Promise<RestoreResult> {
+  // 1. Fetch all current products from Firestore
+  const existingSnap = await db.collection("products").get();
+  const existingMap = new Map<string, Record<string, unknown>>();
+  for (const doc of existingSnap.docs) {
+    existingMap.set(doc.id, doc.data() as Record<string, unknown>);
+  }
+
+  // 2. Map CSV rows to products
+  const csvMap = new Map<string, ProductDocument>();
+  let skipped = 0;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row.Produktname?.trim()) {
+      console.warn(`[deltaSync] Row ${i}: empty Produktname — skipped.`);
+      skipped++;
+      continue;
+    }
+    try {
+      const categoryId = categoryIds.get(row.Kategorie?.trim()) ?? "unknown";
+      const product = csvRowToProduct(row, categoryId);
+      csvMap.set(product.slug, product);
+    } catch (err) {
+      console.error(`[deltaSync] Row ${i} ("${row.Produktname}") failed — skipped:`, err);
+      skipped++;
+    }
+  }
+
+  // 3. Diff into buckets
+  const added: Array<[string, ProductDocument]> = [];
+  const updated: Array<[string, ProductDocument]> = [];
+  const removed: string[] = [];
+
+  for (const [slug, csvProduct] of csvMap) {
+    if (!existingMap.has(slug)) {
+      added.push([slug, csvProduct]);
+    } else {
+      const fbDoc = existingMap.get(slug)!;
+      const differs = !Object.keys(csvProduct).every(
+        (key) =>
+          String((csvProduct as unknown as Record<string, unknown>)[key]) ===
+          String((fbDoc as Record<string, unknown>)[key]),
+      );
+      if (differs) {
+        updated.push([slug, csvProduct]);
+      }
+    }
+  }
+
+  for (const docId of existingMap.keys()) {
+    if (!csvMap.has(docId)) {
+      removed.push(docId);
+    }
+  }
+
+  console.log(
+    `[deltaSync] +${added.length} added, ~${updated.length} updated, -${removed.length} removed`,
+  );
+
+  // 4. Apply upserts in batches
+  const toUpsert = [...added, ...updated];
+  for (let start = 0; start < toUpsert.length; start += BATCH_SIZE) {
+    const chunk = toUpsert.slice(start, start + BATCH_SIZE);
+    const batch = db.batch();
+    for (const [slug, product] of chunk) {
+      batch.set(db.collection("products").doc(slug), product);
+    }
+    await batch.commit();
+  }
+
+  // 5. Apply deletions in batches
+  for (let start = 0; start < removed.length; start += BATCH_SIZE) {
+    const chunk = removed.slice(start, start + BATCH_SIZE);
+    const batch = db.batch();
+    for (const slug of chunk) {
+      batch.delete(db.collection("products").doc(slug));
+    }
+    await batch.commit();
+  }
+
+  return {restored: true, count: added.length + updated.length, skipped, mode: "delta"};
 }
 
 /**
- * Core logic: checks if /products is empty and imports from CSV if so.
+ * Core logic: checks if /products is empty (full import) or if the CSV has
+ * changed since the last sync (delta sync). Hash is stored at _meta/csvSync.
  * Shared between the HTTP handler and the scheduled trigger.
  */
 async function runRestore(): Promise<RestoreResult> {
@@ -37,13 +146,6 @@ async function runRestore(): Promise<RestoreResult> {
   console.log("[checkAndRestore] Checking products collection count...");
   const countSnap = await db.collection("products").count().get();
   const existingCount = countSnap.data().count;
-
-  if (existingCount > 0) {
-    console.log(`[checkAndRestore] ${existingCount} products found — no restore needed.`);
-    return {restored: false, count: existingCount, skipped: 0};
-  }
-
-  console.log("[checkAndRestore] Collection is empty. Starting CSV restore...");
 
   // ── 1. Load CSV — try Storage first, fall back to bundled file ───────────
   let csvString: string;
@@ -65,7 +167,23 @@ async function runRestore(): Promise<RestoreResult> {
     console.log(`[checkAndRestore] CSV loaded from bundled file (${csvString.length} bytes).`);
   }
 
-  // ── 2. Parse CSV ──────────────────────────────────────────────────────────
+  // ── 2. Compute hash and decide sync mode ─────────────────────────────────
+  const csvHash = computeCsvHash(csvString);
+
+  if (existingCount > 0) {
+    const storedHash = await getStoredHash(db);
+    if (csvHash === storedHash) {
+      console.log(
+        `[checkAndRestore] ${existingCount} products found, CSV unchanged — no sync needed.`,
+      );
+      return {restored: false, count: existingCount, skipped: 0, mode: "skipped"};
+    }
+    console.log("[checkAndRestore] CSV change detected — running delta sync...");
+  } else {
+    console.log("[checkAndRestore] Collection is empty. Starting full CSV import...");
+  }
+
+  // ── 3. Parse CSV ──────────────────────────────────────────────────────────
   const {data: rows, errors: parseErrors} = Papa.parse<CsvRow>(csvString, {
     header: true,
     skipEmptyLines: true,
@@ -77,11 +195,18 @@ async function runRestore(): Promise<RestoreResult> {
   }
   console.log(`[checkAndRestore] Parsed ${rows.length} rows.`);
 
-  // ── 3. Resolve / create categories ───────────────────────────────────────
+  // ── 4. Resolve / create categories ───────────────────────────────────────
   const uniqueCategories = [...new Set(rows.map((r) => r.Kategorie?.trim()).filter(Boolean))];
   const categoryIds = await resolveCategories(db, uniqueCategories);
 
-  // ── 4. Batch-write products ───────────────────────────────────────────────
+  // ── 5a. Delta sync (collection non-empty, CSV changed) ───────────────────
+  if (existingCount > 0) {
+    const result = await runDeltaSync(db, rows, categoryIds);
+    await saveHash(db, csvHash);
+    return result;
+  }
+
+  // ── 5b. Full import (collection empty) ───────────────────────────────────
   let written = 0;
   let skipped = 0;
 
@@ -120,7 +245,8 @@ async function runRestore(): Promise<RestoreResult> {
   }
 
   console.log(`[checkAndRestore] Done. Written: ${written}, Skipped: ${skipped}.`);
-  return {restored: true, count: written, skipped};
+  await saveHash(db, csvHash);
+  return {restored: true, count: written, skipped, mode: "full"};
 }
 
 /**
