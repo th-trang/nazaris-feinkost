@@ -26,6 +26,8 @@ export default function CheckoutPage() {
   const isStripeReturn = !!redirectStatus || !!returnClientSecret || !!oldStripeStatus || !!refKey;
 
   useEffect(() => {
+    if (isCheckoutComplete) return;
+
     if (returnClientSecret) {
       setClientSecret(returnClientSecret);
       return;
@@ -36,7 +38,7 @@ export default function CheckoutPage() {
       return;
     }
 
-    if (cartTotal <= 0) {
+    if (!isStripeReturn && cartTotal <= 0) {
       setInitError("Cart total must be greater than zero.");
       return;
     }
@@ -72,7 +74,7 @@ export default function CheckoutPage() {
       });
 
     return () => controller.abort();
-  }, [cartPricingError, cartTotal, returnClientSecret, retryKey]);
+  }, [cartPricingError, cartTotal, isStripeReturn, isCheckoutComplete, returnClientSecret, retryKey]);
 
   useEffect(() => {
     if (cartItems.length === 0 && !isStripeReturn && !isCheckoutComplete) {

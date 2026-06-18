@@ -45,7 +45,7 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
   if (isSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center py-20 px-4">
-        <div className="max-w-md w-full text-center">
+        <div className="max-w-md w-full text-center pt-[130px]">
           <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-gray-100">
             <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle className="w-14 h-14 text-green-600" />
