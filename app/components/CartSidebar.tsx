@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Minus, Plus, ShoppingBag, Trash2, Tag, ChevronRight } from "lucide-react";
+import { X, Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -13,13 +13,12 @@ export function CartSidebar() {
     setIsCartOpen,
     updateQuantity,
     removeFromCart,
-    cartSubtotal,
     cartTotal,
-    cartTotalWithCombos,
+    cartSubtotal,
+    cartDiscount,
+    cartDiscountPercent,
+    minimumOrderMet,
     cartCount,
-    comboSavings,
-    comboUpsells,
-    appliedCombos,
   } = useCart();
 
   return (
@@ -160,54 +159,6 @@ export function CartSidebar() {
                   </div>
                 );
                 })}
-                {/* Upsell nudges */}
-                {comboUpsells.map((upsell) => (
-                  <div
-                    key={upsell.key}
-                    className="flex items-center gap-3 bg-[#FFF44F]/60 border border-[#FFF44F] rounded-xl px-4 py-3"
-                  >
-                    <Tag className="w-4 h-4 text-yellow-700 flex-shrink-0" />
-                    <p className="text-sm text-yellow-900 flex-1">
-                      {t('comboUpsell', {
-                        needed: upsell.needed,
-                        name: t(upsell.key === 'borek' ? 'comboNameBorek' : 'comboNameRolle'),
-                        price: upsell.comboPrice.toFixed(2),
-                      })}
-                    </p>
-                    <Link
-                      href="/products"
-                      onClick={() => setIsCartOpen(false)}
-                      className="flex-shrink-0"
-                    >
-                      <ChevronRight className="w-4 h-4 text-yellow-700" />
-                    </Link>
-                  </div>
-                ))}
-
-                {/* Active combo savings */}
-                {appliedCombos.map((combo) => (
-                  <div
-                    key={combo.productId}
-                    className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3"
-                  >
-                    <Tag className="w-4 h-4 text-green-600 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-sm font-semibold text-green-800">
-                        {t('comboAppliedLabel', {
-                          bundleSize: 3,
-                          name: t(combo.key === 'borek' ? 'comboNameBorek' : 'comboNameRolle'),
-                        })}
-                        {combo.comboCount > 1 && ` ×${combo.comboCount}`}
-                      </p>
-                      <p className="text-xs text-green-700">
-                        {t('comboSavingsLine', { amount: combo.totalSavings.toFixed(2) })}
-                      </p>
-                    </div>
-                    <span className="text-sm font-semibold text-green-700">
-                      −€{combo.totalSavings.toFixed(2)}
-                    </span>
-                  </div>
-                ))}
               </div>
             )}
           </div>
@@ -215,37 +166,49 @@ export function CartSidebar() {
           {/* Footer - Total & Checkout */}
           {cartItems.length > 0 && (
             <div className="border-t border-gray-200 p-6 bg-white/60 backdrop-blur-sm">
-              {comboSavings > 0 ? (
-                <div className="mb-4 pb-4 border-b border-gray-200 space-y-2">
-                  <div className="flex justify-between items-center text-sm text-gray-600">
-                    <span>{t('subtotal')}</span>
-                    <span>€{cartSubtotal.toFixed(2)}</span>
+              <div className="space-y-2 mb-4 pb-4 border-b border-gray-200">
+                {cartDiscountPercent > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-600">{t('subtotal')}:</span>
+                    <span className="text-sm text-gray-600">€{cartSubtotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-sm text-green-700">
-                    <span>{t('comboDiscount')}</span>
-                    <span>−€{comboSavings.toFixed(2)}</span>
+                )}
+                {cartDiscountPercent > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-green-600">{t('discount')} ({cartDiscountPercent}%):</span>
+                    <span className="text-sm text-green-600">-€{cartDiscount.toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between items-center text-xl">
-                    <span className="text-gray-900">{t('total')}:</span>
-                    <span className="text-gray-900">€{cartTotalWithCombos.toFixed(2)}</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-200">
+                )}
+                <div className="flex justify-between items-center pt-1">
                   <span className="text-lg text-gray-900">{t('total')}:</span>
                   <span className="text-2xl text-gray-900">€{cartTotal.toFixed(2)}</span>
                 </div>
+              </div>
+
+              {/* Minimum order warning */}
+              {!minimumOrderMet && (
+                <p className="text-sm text-red-500 mb-3 text-center">
+                  {t('minimumOrderWarning')}
+                </p>
               )}
 
               {/* Checkout Button */}
-              <Link
-                href="/checkout"
-                onClick={() => setIsCartOpen(false)}
-                className={`block w-full py-4 text-white text-center rounded-xl transition-all shadow-lg hover:shadow-xl 
-                   bg-green-600 hover:bg-green-700`}
-              >
-                {t('checkout')}
-              </Link>
+              {minimumOrderMet ? (
+                <Link
+                  href="/checkout"
+                  onClick={() => setIsCartOpen(false)}
+                  className="block w-full py-4 text-white text-center rounded-xl transition-all shadow-lg hover:shadow-xl bg-green-600 hover:bg-green-700"
+                >
+                  {t('checkout')}
+                </Link>
+              ) : (
+                <button
+                  disabled
+                  className="block w-full py-4 text-white text-center rounded-xl bg-gray-400 cursor-not-allowed"
+                >
+                  {t('checkout')}
+                </button>
+              )}
 
               {/* Continue Shopping */}
               <button

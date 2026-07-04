@@ -1,17 +1,17 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { CartItem, AppliedCombo } from "../context/CartContext";
+import { CartItem } from "../context/CartContext";
 
 interface OrderSummaryProps {
   isSubmitting: boolean;
   submitError: string | null;
   cartItems: CartItem[];
+  cartSubtotal: number;
+  cartDiscount: number;
+  cartDiscountPercent: number;
   cartTotal: number;
   cartPricingError: string | null;
-  appliedCombos: AppliedCombo[];
-  comboSavings: number;
-  cartSubtotal: number;
   onSubmit: (e: React.FormEvent) => void;
 }
 
@@ -19,11 +19,11 @@ export default function OrderSummary({
   isSubmitting,
   submitError,
   cartItems,
+  cartSubtotal,
+  cartDiscount,
+  cartDiscountPercent,
   cartTotal,
   cartPricingError,
-  appliedCombos,
-  comboSavings,
-  cartSubtotal,
   onSubmit,
 }: OrderSummaryProps) {
   const t = useTranslations("checkout");
@@ -63,40 +63,18 @@ export default function OrderSummary({
 
       {/* Pricing */}
       <div className="space-y-2 pt-4 border-t border-gray-200">
-        {comboSavings > 0 && (
-          <>
-            <div className="flex justify-between text-sm text-gray-500">
-              <span>{t("subtotal")}</span>
-              <span>€{cartSubtotal.toFixed(2)}</span>
-            </div>
-
-            {appliedCombos.map((combo) => (
-              <div
-                key={combo.productId}
-                className="flex justify-between items-center text-sm"
-              >
-                <span className="text-green-700">
-                  🏷️{" "}
-                  {t("comboAppliedLabel", {
-                    bundleSize: 3,
-                    name: t(
-                      combo.key === "borek"
-                        ? "comboNameBorek"
-                        : "comboNameRolle",
-                    ),
-                  })}
-                  {combo.comboCount > 1 ? ` ×${combo.comboCount}` : ""}
-                </span>
-                <span className="font-semibold text-green-700">
-                  −€{combo.totalSavings.toFixed(2)}
-                </span>
-              </div>
-            ))}
-
-            <div className="border-t border-dashed border-gray-200 pt-1" />
-          </>
+        {cartDiscountPercent > 0 && (
+          <div className="flex justify-between text-sm text-gray-500">
+            <span>{t("subtotal")}</span>
+            <span>€{cartSubtotal.toFixed(2)}</span>
+          </div>
         )}
-
+        {cartDiscountPercent > 0 && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>{t("discount")} ({cartDiscountPercent}%)</span>
+            <span>-€{cartDiscount.toFixed(2)}</span>
+          </div>
+        )}
         <div className="flex justify-between text-sm text-gray-500">
           <span>{t("netto")}</span>
           <span>€{(cartTotal / 1.07).toFixed(2)}</span>
@@ -109,12 +87,6 @@ export default function OrderSummary({
           <span>{t("total")}</span>
           <span className="text-3xl">€{cartTotal.toFixed(2)}</span>
         </div>
-
-        {comboSavings > 0 && (
-          <div className="rounded-xl bg-green-50 px-3 py-2 text-center text-sm text-green-700">
-            {t("comboSavingsMessage", { amount: comboSavings.toFixed(2) })}
-          </div>
-        )}
       </div>
 
       {/* Submit Button */}

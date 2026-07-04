@@ -23,7 +23,7 @@ Melanzane Creme,Frischkäse-Cremes,,,,Nein,mit Knoblauch,Milchprodukt,100 Gramm,
 Kichererbsensalat,Salate,      ,,,Nein,ohne Knoblauch,Vegan,100 Gramm,"3,8",Nein,,
 Linsensalat,Salate,Im mediterranen Stil,,,leicht Scharf,ohne Knoblauch,Vegan,100 Gramm,"3,8",Nein,,
 Mediterrane Melansane,Antipasti & Gemüse,"Im mediterranen Stil, mit Tomaten und Knoblauch",,,Nein,mit Knoblauch,Vegan,100 Gramm,"4,9",Nein,,
-Melansane Babaganusch,Antipasti & Gemüse,"baba ghanoush style mit Knoblauch, crunchy, zwiebel, minze",,,Nein,mit Knoblauch,Vegan,100 Gramm,"4,8",Nein,,3 Tage
+Melansane Babaganusch,Antipasti & Gemüse,"Im Baba Ghanoush Stil mit Knoblauch, Crunchy, Zwiebel, Minze",,,Nein,mit Knoblauch,Vegan,100 Gramm,"4,8",Nein,,3 Tage
 Mediterraner Couscous-Salat,Salate,Im mediterranen Stil,,,leicht Scharf,ohne Knoblauch,Vegan,100 Gramm,"3,2",Nein,,3 Tage
 Marokkanischer Couscous-Salat,Salate,,,,Nein,ohne Knoblauch,Vegan,100 Gramm,"3,2",Nein,,3 Tage
 Chilikäsewürfel,Antipasti & Gemüse,"Im mediterranen Stil, mit Chili und kräuter, 40% fett",,,Scharf,mit Knoblauch,Milchprodukt,100 Gramm,4,Nein,,3 tage
@@ -56,8 +56,8 @@ Griechisches Schafskäse (Natur),Käse,"cremig nature, Fett i. Tr. 43%, unter Mi
 Griechischer Schafskäse,Käse,"mit Kräutermarinade, Fett i. Tr. 43%",,,Nein,ohne Knoblauch,Milchprodukt,100 Gramm,"3,8",Nein,,5 Tage
 Griechischer Schafskäse,Käse,"mit Knoblauch und Chili Marinade, Fett i. Tr. 43%",,,Scharf,mit Knoblauch,Milchprodukt,100 Gramm,"3,8",Nein,,5 Tage
 Chili-Cranberry Creme,Frischkäse-Cremes,süß-scharf,,,leicht Scharf,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
-Ananas-Curry Creme,Frischkäse-Cremes,"mit Minze, würzig",,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
-Pomodori Creme,Frischkäse-Cremes,"Mediterran-Style, aromatisch, leicht würzig",,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,
+Ananas-Curry Creme,Frischkäse-Cremes,"mit Minze, würzig",,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Ja,Sommer,3 Tage
+Pomodori Creme,Frischkäse-Cremes,"Mediterran-Style, aromatisch, leicht würzig",,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Ja,,3 Tage
 Tzatziki Creme,Frischkäse-Cremes,,,,Nein,mit Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,
 Grüne griechische Oliven,Oliven,mit Knoblauch und Petersilie,,,Nein,mit Knoblauch,Vegan,100 Gramm,"3,9",Nein,,
 Schwarze griechische Oliven,Oliven,mit Knoblauch und Petersilie,,,Nein,mit Knoblauch,Vegan,100 Gramm,"3,9",Nein,,
@@ -68,3 +68,4 @@ Handgefüllte griechische Oliven,Oliven,mit Schafskäse,,,Nein,mit Knoblauch,Mil
 Kichererbsen-Rolle,Rolle,"mit Kichererbsen, Houmous",,,Nein,ohne Knoblauch,Vegan,Stück,"3,8",Nein,,
 Griechischer Krautsalat,Salate,leicht süß-säuerlich eingelegt,,,Nein,ohne Knoblauch,Vegan,100 Gramm,"2,8",Nein,,3 Tage
 Vollkorn Toscano,Brot,natürlichem Vollkornsauerteig,,,Nein,ohne Knoblauch,Vegan,100 Gramm,"0,98",Nein,,
+Zitroneoliven Creme,Frischkäse-Cremes,"fruchtig, würzig",,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Ja,Sommer,3 Tage

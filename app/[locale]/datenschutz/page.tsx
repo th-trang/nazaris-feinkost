@@ -40,12 +40,13 @@ export default function DatenschutzPage() {
             </h2>
             <p>Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:</p>
             <div className="mt-2">
-              <p>Nazari&apos;s Feinkost</p>
-              <p>Inhaber: [Ihr Name]</p>
-              <p>[Straße und Hausnummer]</p>
-              <p>[PLZ] Hamburg</p>
-              <p>Telefon: [Telefonnummer]</p>
-              <p>E-Mail: [E-Mail-Adresse]</p>
+              <p>Nazari&apos;s Feinkost & Backwaren</p>
+              <p>Inhaber: Jahangir Nazari Moghaddam</p>
+              <p>Wilhelm Stein Weg 12</p>
+              <p>22339 Hamburg</p>
+              <p>Telefon: 040 52594417</p>
+              <p>Fax: 040 22603691</p>
+              <p>E-Mail: info@nazarifeinkost.de</p>
             </div>
           </section>
 
@@ -87,7 +88,7 @@ export default function DatenschutzPage() {
               die Verarbeitung Ihrer personenbezogenen Daten durch uns zu beschweren.
             </p>
             <p className="mt-2">
-              Bei Fragen zum Datenschutz wenden Sie sich bitte an: [E-Mail-Adresse]
+              Bei Fragen zum Datenschutz wenden Sie sich bitte an: info@nazarifeinkost.de
             </p>
           </section>
 

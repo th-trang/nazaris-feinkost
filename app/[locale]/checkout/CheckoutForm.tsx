@@ -1,5 +1,4 @@
 import { useCheckout } from "./useCheckout";
-import { useCart } from "@/app/context/CartContext";
 import { CreditCard, CheckCircle, AlertTriangle } from "lucide-react";
 import { useStripe, useElements, PaymentElement, ExpressCheckoutElement } from "@stripe/react-stripe-js";
 import { useLocale } from "next-intl";
@@ -21,6 +20,9 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
     orderNumber,
     cartItems,
     cartTotal,
+    cartSubtotal,
+    cartDiscount,
+    cartDiscountPercent,
     cartPricingError,
     isStripeReturnRedirect,
     availableLocations,
@@ -28,14 +30,12 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
     selectedLocation,
     setAvailableLocations,
     tomorrow,
-    isExpired,
+    // isExpired,
     handleChange,
     handleSubmit,
     handleExpressCheckoutConfirm,
     setPickupDate,
   } = useCheckout(stripe, elements, paymentIntentId, expiresAt, onSuccess, onPaymentFailed);
-
-  const { appliedCombos, comboSavings, cartSubtotal } = useCart();
 
   // Show nothing while redirecting
   if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
@@ -87,31 +87,31 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
     );
   }
 
-  if (isExpired) {
-    return (
-      <div className="min-h-screen flex items-center justify-center py-20 px-4">
-        <div className="max-w-md w-full text-center">
-          <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-gray-100">
-            <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <AlertTriangle className="w-14 h-14 text-amber-600" />
-            </div>
-            <h2 className="text-3xl text-gray-900 mb-4">
-              {t("sessionExpired")}
-            </h2>
-            <p className="text-gray-700 mb-6">
-              {t("sessionExpiredMessage")}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-lg"
-            >
-              {t("tryAgain")}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // if (isExpired) {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center py-20 px-4">
+  //       <div className="max-w-md w-full text-center">
+  //         <div className="bg-white/80 backdrop-blur-sm rounded-3xl p-12 shadow-xl border border-gray-100">
+  //           <div className="w-24 h-24 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-6">
+  //             <AlertTriangle className="w-14 h-14 text-amber-600" />
+  //           </div>
+  //           <h2 className="text-3xl text-gray-900 mb-4">
+  //             {t("sessionExpired")}
+  //           </h2>
+  //           <p className="text-gray-700 mb-6">
+  //             {t("sessionExpiredMessage")}
+  //           </p>
+  //           <button
+  //             onClick={() => window.location.reload()}
+  //             className="px-8 py-3 bg-green-600 text-white rounded-xl hover:bg-green-700 transition-all shadow-lg"
+  //           >
+  //             {t("tryAgain")}
+  //           </button>
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen py-20 px-4 sm:px-6 lg:px-8">
@@ -207,11 +207,11 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                 isSubmitting={isSubmitting}
                 submitError={submitError}
                 cartItems={cartItems}
+                cartSubtotal={cartSubtotal}
+                cartDiscount={cartDiscount}
+                cartDiscountPercent={cartDiscountPercent}
                 cartTotal={cartTotal}
                 cartPricingError={cartPricingError}
-                appliedCombos={appliedCombos}
-                comboSavings={comboSavings}
-                cartSubtotal={cartSubtotal}
                 onSubmit={handleSubmit}
               />
             </div>

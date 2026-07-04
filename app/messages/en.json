@@ -189,6 +189,7 @@
     "leftovers": "Leftovers",
     "subtotal": "Subtotal",
     "comboDiscount": "Combo discount",
+    "discount": "Discount",
     "comboNameBorek": "Boerek",
     "comboNameRolle": "Roll",
     "comboAppliedLabel": "{bundleSize}x {name} combo",
@@ -248,7 +249,9 @@
     "comboNameRolle": "Roll",
     "comboAppliedLabel": "{bundleSize}x {name} combo",
     "comboSavingsLine": "You save EUR {amount}",
-    "comboUpsell": "Add {needed}x {name} for the combo deal (3 for EUR {price})"
+    "comboUpsell": "Add {needed}x {name} for the combo deal (3 for EUR {price})",
+    "discount": "Discount",
+    "minimumOrderWarning": "Minimum order: €10.00"
   },
   "staffOrders": {
     "dashboardTitle": "Staff Dashboard",

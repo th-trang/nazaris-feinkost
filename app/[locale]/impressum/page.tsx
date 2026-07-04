@@ -8,33 +8,24 @@ export default function ImpressumPage() {
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Angaben gemäß § 5 DDG</h2>
-            <p>Nazari&apos;s Feinkost</p>
-            <p>Inhaber: [Vor- und Nachname]</p>
-            <p>[Straße und Hausnummer]</p>
-            <p>[PLZ] Hamburg</p>
+            <p className="font-bold">Nazari&apos;s Feinkost & Backwaren</p>
+            <p>Inhaber: Jahangir Nazari Moghaddam</p>
+            <p>Wilhelm Stein Weg 12</p>
+            <p>22339 Hamburg</p>
             <p>Deutschland</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Kontakt</h2>
-            <p>Telefon: [Telefonnummer]</p>
-            <p>E-Mail: [E-Mail-Adresse]</p>
+            <p>Telefon: 040 52594417</p>
+            <p>Fax: 040 22603691</p>
+            <p>E-Mail: info@nazarifeinkost.de</p>
           </section>
 
           {/* Nur ausfüllen, wenn USt-IdNr. vorhanden – sonst diese Section entfernen */}
           <section>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Umsatzsteuer-ID</h2>
-            <p>
-              Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:
-            </p>
-            <p>[USt-IdNr. – oder diese Section entfernen, falls nicht USt-pflichtig]</p>
-          </section>
-
-          {/* Nur ausfüllen, wenn im Handelsregister eingetragen – sonst diese Section entfernen */}
-          <section>
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">Handelsregister</h2>
-            <p>Registergericht: Amtsgericht Hamburg</p>
-            <p>Registernummer: [HRA- oder HRB-Nummer – oder diese Section entfernen]</p>
+            <p>50/169/00798</p>
           </section>
 
           <section>

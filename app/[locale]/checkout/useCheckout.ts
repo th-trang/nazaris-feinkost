@@ -33,6 +33,9 @@ export function useCheckout(
   const {
     cartItems,
     cartTotal,
+    cartSubtotal,
+    cartDiscount,
+    cartDiscountPercent,
     cartPricingBreakdown,
     cartPricingError,
     clearCart,
@@ -75,9 +78,8 @@ export function useCheckout(
     }
   }, []); // Run once on mount – savedState is captured at mount time
 
-  // #region TIMER
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
-  const [isExpired, setIsExpired] = useState(false);
+  // const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  // const [isExpired, setIsExpired] = useState(false);
   const [pendingOrderNumber, setPendingOrderNumber] = useState<string | null>(null);
 
   const cancelPaymentIntent = useCallback(async () => {
@@ -301,7 +303,7 @@ export function useCheckout(
 
   const submitAndConfirmPayment = async (): Promise<boolean> => {
     if (!stripe || !elements) return false;
-    if (isExpired) return false;
+    // if (isExpired) return false;
     setSubmitError(null);
 
     if (cartPricingError) {
@@ -416,6 +418,9 @@ export function useCheckout(
     orderNumber,
     cartItems,
     cartTotal,
+    cartSubtotal,
+    cartDiscount,
+    cartDiscountPercent,
     cartPricingBreakdown,
     cartPricingError,
     isStripeReturnRedirect,
@@ -425,8 +430,8 @@ export function useCheckout(
     isSepaAllowed: isSepaAllowedForPickupDate(formData.pickupDate),
     tomorrowStr,
     tomorrow,
-    timeRemaining,
-    isExpired,
+    // timeRemaining,
+    // isExpired,
     setAvailableLocations,
     handleChange,
     handleSubmit,

@@ -189,6 +189,7 @@
     "leftovers": "Restartikel",
     "subtotal": "Zwischensumme",
     "comboDiscount": "Kombo-Rabatt",
+    "discount": "Rabatt",
     "comboNameBorek": "Boerek",
     "comboNameRolle": "Rolle",
     "comboAppliedLabel": "{bundleSize}x {name} Kombo",
@@ -248,7 +249,9 @@
     "comboNameRolle": "Rolle",
     "comboAppliedLabel": "{bundleSize}x {name} Kombo",
     "comboSavingsLine": "Sie sparen EUR {amount}",
-    "comboUpsell": "Noch {needed}x {name} fuer das Komboangebot (3 fuer EUR {price})"
+    "comboUpsell": "Noch {needed}x {name} fuer das Komboangebot (3 fuer EUR {price})",
+    "discount": "Rabatt",
+    "minimumOrderWarning": "Mindestbestellwert: €10.00"
   },
   "staffOrders": {
     "dashboardTitle": "Mitarbeiter-Dashboard",
