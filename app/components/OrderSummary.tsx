@@ -10,6 +10,10 @@ interface OrderSummaryProps {
   cartSubtotal: number;
   cartDiscount: number;
   cartDiscountPercent: number;
+  bundleDiscountRolle: number;
+  bundleDiscountBoerek: number;
+  rolleBundleFreeCount: number;
+  boerekBundleFreeCount: number;
   cartTotal: number;
   cartPricingError: string | null;
   onSubmit: (e: React.FormEvent) => void;
@@ -22,6 +26,10 @@ export default function OrderSummary({
   cartSubtotal,
   cartDiscount,
   cartDiscountPercent,
+  bundleDiscountRolle,
+  bundleDiscountBoerek,
+  rolleBundleFreeCount,
+  boerekBundleFreeCount,
   cartTotal,
   cartPricingError,
   onSubmit,
@@ -63,10 +71,22 @@ export default function OrderSummary({
 
       {/* Pricing */}
       <div className="space-y-2 pt-4 border-t border-gray-200">
-        {cartDiscountPercent > 0 && (
+        {(cartDiscountPercent > 0 || bundleDiscountRolle > 0 || bundleDiscountBoerek > 0) && (
           <div className="flex justify-between text-sm text-gray-500">
             <span>{t("subtotal")}</span>
             <span>€{cartSubtotal.toFixed(2)}</span>
+          </div>
+        )}
+        {bundleDiscountRolle > 0 && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>{t("rolleBundle", { count: rolleBundleFreeCount })}</span>
+            <span>-€{bundleDiscountRolle.toFixed(2)}</span>
+          </div>
+        )}
+        {bundleDiscountBoerek > 0 && (
+          <div className="flex justify-between text-sm text-green-600">
+            <span>{t("boerekBundle", { count: boerekBundleFreeCount })}</span>
+            <span>-€{bundleDiscountBoerek.toFixed(2)}</span>
           </div>
         )}
         {cartDiscountPercent > 0 && (

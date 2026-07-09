@@ -17,6 +17,10 @@ export function CartSidebar() {
     cartSubtotal,
     cartDiscount,
     cartDiscountPercent,
+    bundleDiscountRolle,
+    bundleDiscountBoerek,
+    rolleBundleFreeCount,
+    boerekBundleFreeCount,
     minimumOrderMet,
     cartCount,
   } = useCart();
@@ -167,10 +171,22 @@ export function CartSidebar() {
           {cartItems.length > 0 && (
             <div className="border-t border-gray-200 p-6 bg-white/60 backdrop-blur-sm">
               <div className="space-y-2 mb-4 pb-4 border-b border-gray-200">
-                {cartDiscountPercent > 0 && (
+                {(cartDiscountPercent > 0 || bundleDiscountRolle > 0 || bundleDiscountBoerek > 0) && (
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-gray-600">{t('subtotal')}:</span>
                     <span className="text-sm text-gray-600">€{cartSubtotal.toFixed(2)}</span>
+                  </div>
+                )}
+                {bundleDiscountRolle > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-green-600">{t('rolleBundle', { count: rolleBundleFreeCount })}:</span>
+                    <span className="text-sm text-green-600">-€{bundleDiscountRolle.toFixed(2)}</span>
+                  </div>
+                )}
+                {bundleDiscountBoerek > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-green-600">{t('boerekBundle', { count: boerekBundleFreeCount })}:</span>
+                    <span className="text-sm text-green-600">-€{bundleDiscountBoerek.toFixed(2)}</span>
                   </div>
                 )}
                 {cartDiscountPercent > 0 && (

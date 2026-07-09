@@ -181,6 +181,7 @@ export default function ProductsPage() {
                     pricePer100g: t('pricePer100g'),
                     pricePerPiece: t('pricePerPiece'),
                     pieces: t('pieces'),
+                    seasonal: t('seasonal'),
                   }}
                   translatedCategory={getTranslatedCategory(product.categoryName)}
                 />

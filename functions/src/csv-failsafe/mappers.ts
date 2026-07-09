@@ -179,12 +179,17 @@ function mapAvailability(
   if (!saisonal || saisonal.trim().toLowerCase() !== "ja") {
     return {availableFrom: null, availableTo: null};
   }
-  const parts = (zeitraum ?? "").split(" bis ");
-  if (parts.length !== 2) return {availableFrom: null, availableTo: null};
-  return {
-    availableFrom: parts[0].trim() || null,
-    availableTo: parts[1].trim() || null,
-  };
+  const zeitraumTrimmed = (zeitraum ?? "").trim();
+  const parts = zeitraumTrimmed.split(" bis ");
+  if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+    return {
+      availableFrom: parts[0].trim(),
+      availableTo: parts[1].trim(),
+    };
+  }
+  // Seasonal but no date range — store the season label (e.g. "Sommer") or a fallback
+  const label = zeitraumTrimmed || "saisonal";
+  return {availableFrom: label, availableTo: label};
 }
 
 function mapIngredients(zutaten: string, allergenGroups: string[]): ProductIngredient[] {
