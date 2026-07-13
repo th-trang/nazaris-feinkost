@@ -100,23 +100,49 @@ export const widerrufOrder = onCall(FUNCTION_OPTIONS, async (request) => {
   }
 
   const payment = (docData.payment ?? {}) as Record<string, string>;
-  const paymentIntentId = payment.stripePaymentIntentId ?? null;
+  let paymentIntentId: string | null = payment.stripePaymentIntentId ?? null;
 
-  // Issue Stripe refund when the order has already been paid
+  console.log(`[widerrufOrder] Canceling order ${docData.orderNumber} — Firestore status: ${status}, paymentIntentId: ${paymentIntentId ?? "none"}`);
+
+  // Issue Stripe refund when the order has already been paid.
+  // We verify payment state directly with Stripe so this works even when the
+  // webhook hasn't fired yet (e.g. local emulator).
   let refundId: string | null = null;
-  if (status === "paid" && paymentIntentId) {
-    const stripe = new Stripe(stripeSecretKey.value());
-    try {
-      const refund = await stripe.refunds.create({
-        payment_intent: paymentIntentId,
-        reason: "requested_by_customer",
-      });
-      refundId = refund.id;
-      console.log(`[widerrufOrder] Stripe refund created: ${refundId} for order ${docData.orderNumber}`);
-    } catch (err) {
-      console.error(`[widerrufOrder] Stripe refund failed for order ${docData.orderNumber}:`, err);
-      throw new HttpsError("internal", "refund_failed");
+  const stripe = new Stripe(stripeSecretKey.value());
+
+  // If the webhook hasn't stored the ID yet, search Stripe by order number
+  if (!paymentIntentId) {
+    console.log(`[widerrufOrder] payment.stripePaymentIntentId missing — searching Stripe for ${docData.orderNumber}`);
+    const searchResult = await stripe.paymentIntents.search({
+      query: `metadata['orderNumber']:'${docData.orderNumber}' AND status:'succeeded'`,
+      limit: 1,
+    });
+    paymentIntentId = searchResult.data[0]?.id ?? null;
+    console.log(`[widerrufOrder] Stripe search result: ${paymentIntentId ?? "not found"}`);
+  }
+
+  if (paymentIntentId) {
+    // Retrieve the live status from Stripe — don't trust only Firestore
+    const pi = await stripe.paymentIntents.retrieve(paymentIntentId);
+    console.log(`[widerrufOrder] Stripe PI ${paymentIntentId} status: ${pi.status}`);
+
+    if (pi.status === "succeeded") {
+      try {
+        const refund = await stripe.refunds.create({
+          payment_intent: paymentIntentId,
+          reason: "requested_by_customer",
+        });
+        refundId = refund.id;
+        console.log(`[widerrufOrder] Refund created: ${refundId} for order ${docData.orderNumber}`);
+      } catch (err) {
+        console.error(`[widerrufOrder] Stripe refund failed for order ${docData.orderNumber}:`, err);
+        throw new HttpsError("internal", "refund_failed");
+      }
+    } else {
+      console.log(`[widerrufOrder] PI not succeeded (${pi.status}) — canceling without refund`);
     }
+  } else {
+    console.log(`[widerrufOrder] No payment intent found — canceling without refund`);
   }
 
   const updatePayload: Record<string, unknown> = {

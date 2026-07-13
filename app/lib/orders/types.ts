@@ -18,6 +18,7 @@ export interface CreateOrderInput {
   pickupLocation: string;
   specialRequests?: string;
   paymentMethod: PaymentMethod;
+  paymentIntentId?: string;
   items: OrderItemInput[];
 }
 

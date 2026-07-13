@@ -112,6 +112,7 @@ export const createOrder = onCall(FUNCTION_OPTIONS, async (request) => {
 		payment: {
 			method: payload.paymentMethod,
 			status: "pending",
+			...(payload.paymentIntentId ? {stripePaymentId: payload.paymentIntentId} : {}),
 		},
 		totals: {
 			subtotal,

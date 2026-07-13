@@ -327,6 +327,7 @@ export function useCheckout(
       pickupLocation: formData.pickupLocation,
       specialRequests: formData.specialRequests?.trim(),
       paymentMethod: formData.paymentMethod === "paypal" ? "paypal" : formData.paymentMethod === "sepa_debit" ? "sepa_debit" : "card",
+      paymentIntentId: paymentIntentId ?? undefined,
       items: cartItems.map((item) => ({
         id: item.id,
         name: item.name,

@@ -145,6 +145,9 @@ export const assertValidCreateOrderPayload = (
 		pickupLocation,
 		specialRequests,
 		paymentMethod,
+		paymentIntentId: typeof parsed.paymentIntentId === "string" && parsed.paymentIntentId.trim()
+			? parsed.paymentIntentId.trim()
+			: undefined,
 		items: sanitizedItems,
 	};
 };
