@@ -2,13 +2,17 @@ import {getFirestore, FieldValue} from "firebase-admin/firestore";
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
 import Stripe from "stripe";
+import {sendTelegramNotification} from "../lib/telegram.js";
+import {sendOrderCancellationEmail, emailSecrets} from "../lib/email.js";
 
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
+const telegramBotToken = defineSecret("TELEGRAM_BOT_TOKEN");
+const telegramChatId = defineSecret("TELEGRAM_CHAT_ID");
 
 const FUNCTION_OPTIONS = {
   region: "europe-west3",
   invoker: "public" as const,
-  secrets: [stripeSecretKey],
+  secrets: [stripeSecretKey, telegramBotToken, telegramChatId, ...emailSecrets],
 };
 
 const CANCELLABLE_STATUSES = ["pending", "paid"];
@@ -158,6 +162,35 @@ export const widerrufOrder = onCall(FUNCTION_OPTIONS, async (request) => {
   }
 
   await db.collection("orders").doc(matchedDoc.id).update(updatePayload);
+
+  // ── Telegram notification ──────────────────────────────────────────────────
+  const customer = (docData.customer ?? {}) as Record<string, string>;
+  const notificationLines = [
+    `❌ Bestellung storniert: ${docData.orderNumber}`,
+    `Name: ${customer.firstName} ${customer.lastName}`,
+    `E-Mail: ${customer.email}`,
+    `Abholdatum: ${pickup.date ?? ""}`,
+    `Abholort: ${pickup.location ?? ""}`,
+    refundId ? `Rückerstattung: ${refundId}` : "Keine Rückerstattung (Zahlung ausstehend)",
+  ];
+
+  await sendTelegramNotification(
+    notificationLines.join("\n"),
+    telegramBotToken.value(),
+    telegramChatId.value(),
+  );
+
+  // ── Cancellation email to customer ──────────────────────────────────
+  await sendOrderCancellationEmail({
+    orderNumber: docData.orderNumber,
+    firstName: customer.firstName ?? "",
+    lastName: customer.lastName ?? "",
+    email: customer.email ?? "",
+    pickupDate: pickup.date ?? "",
+    pickupLocation: pickup.location ?? "",
+    refunded: refundId !== null,
+    refundId,
+  });
 
   return {success: true, orderNumber: docData.orderNumber, refunded: refundId !== null};
 });

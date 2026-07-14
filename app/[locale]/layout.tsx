@@ -6,6 +6,7 @@ import { CartSidebar } from "../components/CartSidebar";
 import PromoBanner from "../components/PromoBanner";
 import Header from "../components/Header";
 import Footer from "../components/Footer";
+import { CookieBanner } from "../components/CookieBanner";
 
 export default async function LocaleLayout({
     children,
@@ -27,6 +28,7 @@ export default async function LocaleLayout({
                             {children}
                         </main>
                     </ClientLayout>
+                    <CookieBanner />
                     <Footer />
                     <CartSidebar />
                 </div>

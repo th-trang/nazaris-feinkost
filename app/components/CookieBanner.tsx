@@ -1,3 +1,4 @@
+'use client'
 import { useState, useEffect } from "react";
 import { Cookie, X, ChevronDown, ChevronUp } from "lucide-react";
 import { motion } from "motion/react";
