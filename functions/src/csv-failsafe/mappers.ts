@@ -8,6 +8,7 @@ export interface CsvRow {
   Kategorie: string;
   Beschreibung: string;
   Zutaten: string; // semicolon-separated, may be absent in older CSVs
+  Bilder: string; // image URL
   Allergien: string; // comma-separated groups: "gluten,dairy,nuts"
   Scharf: string;
   "Knoblauchintensität": string;
@@ -16,7 +17,7 @@ export interface CsvRow {
   Preis: string;
   Saisonal: string;
   "Verfügbarkeitszeitraum": string;
-  "Mindesten Haltbarkeit": string;
+  Mindesthaltbarkeit: string;
 }
 
 // ─── Firestore document shape ─────────────────────────────────────────────────
@@ -69,8 +70,8 @@ export function csvRowToProduct(row: CsvRow, categoryId: string): ProductDocumen
     description: row.Beschreibung?.trim() ?? "",
     price,
     priceUnit: mapPriceUnit(row.Preiseinheit),
-    imageUrl: null,
-    mhd: mapMhd(row["Mindesten Haltbarkeit"]),
+    imageUrl: parseImageUrl(row.Bilder),
+    mhd: mapMhd(row.Mindesthaltbarkeit),
     availableFrom,
     availableTo,
     active: true,
@@ -113,14 +114,19 @@ export function productToCsvRow(
     Saisonal: seasonal ? "Ja" : "Nein",
     "Verfügbarkeitszeitraum":
       seasonal ? `${doc.availableFrom} bis ${doc.availableTo}` : "",
-    "Mindesten Haltbarkeit": mhdStr,
+    Mindesthaltbarkeit: mhdStr,
   };
 }
 
 // ─── Field parsers ────────────────────────────────────────────────────────────
 
-function parsePrice(raw: string | undefined | null): number {
-  if (!raw || !raw.trim()) return 0; // price not yet set in CSV
+// Some CSV rows pack multiple comma-separated URLs into one cell; use the first.
+function parseImageUrl(raw: string | undefined | null): string | null {
+  if (!raw || !raw.trim()) return null;
+  return raw.split(",")[0].trim() || null;
+}
+
+function parsePrice(raw: string | undefined | null): number {  if (!raw || !raw.trim()) return 0; // price not yet set in CSV
   const normalised = raw.trim().replace(",", ".");
   const n = parseFloat(normalised);
   if (isNaN(n)) throw new Error(`Invalid price: "${raw}"`);
@@ -179,12 +185,17 @@ function mapAvailability(
   if (!saisonal || saisonal.trim().toLowerCase() !== "ja") {
     return {availableFrom: null, availableTo: null};
   }
-  const parts = (zeitraum ?? "").split(" bis ");
-  if (parts.length !== 2) return {availableFrom: null, availableTo: null};
-  return {
-    availableFrom: parts[0].trim() || null,
-    availableTo: parts[1].trim() || null,
-  };
+  const zeitraumTrimmed = (zeitraum ?? "").trim();
+  const parts = zeitraumTrimmed.split(" bis ");
+  if (parts.length === 2 && parts[0].trim() && parts[1].trim()) {
+    return {
+      availableFrom: parts[0].trim(),
+      availableTo: parts[1].trim(),
+    };
+  }
+  // Seasonal but no date range — store the season label (e.g. "Sommer") or a fallback
+  const label = zeitraumTrimmed || "saisonal";
+  return {availableFrom: label, availableTo: label};
 }
 
 function mapIngredients(zutaten: string, allergenGroups: string[]): ProductIngredient[] {

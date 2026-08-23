@@ -39,6 +39,7 @@ interface ProductCardProps {
     pricePer100g: string;
     pricePerPiece: string;
     pieces: string;
+    seasonal: string;
   };
   translatedCategory: string;
 }
@@ -71,6 +72,8 @@ export default function ProductCard({
   const displayDescription = product.descriptionTranslations?.[locale] || product.description;
   const displayCategory = product.categoryNameTranslations?.[locale] || translatedCategory;
 
+  const isSeasonal = product.availableFrom !== null && product.availableTo !== null;
+
   return (
     <div className="bg-white/95 rounded-2xl shadow-lg hover:shadow-xl transition-all border border-gray-100">
       {/* Product Image */}
@@ -86,11 +89,18 @@ export default function ProductCard({
             <span className="text-gray-400 text-sm">{displayName}</span>
           </div>
         )}
-        {isVegan && (
-          <div className="absolute top-3 left-3 bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium">
-            🌱 {translations.vegan}
-          </div>
-        )}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {isVegan && (
+            <div className="bg-green-600 text-white text-xs px-3 py-1 rounded-full font-medium">
+              🌱 {translations.vegan}
+            </div>
+          )}
+          {isSeasonal && (
+            <div className="bg-amber-500 text-white text-xs px-3 py-1 rounded-full font-medium">
+              🌿 {translations.seasonal}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Product Info */}

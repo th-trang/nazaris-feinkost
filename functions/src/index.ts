@@ -20,3 +20,4 @@ export {onOrderPaid} from "./handlers/onOrderPaid.js";
 export {stripeWebhook} from "./handlers/stripeWebhook.js";
 export {checkAndRestoreProducts, scheduledProductCheck} from "./csv-failsafe/checkAndRestore.js";
 export {exportProductsToCSV} from "./csv-failsafe/exportToCSV.js";
+export {widerrufOrder} from "./handlers/widerrufOrder.js";

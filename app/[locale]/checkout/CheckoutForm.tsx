@@ -23,6 +23,10 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
     cartSubtotal,
     cartDiscount,
     cartDiscountPercent,
+    bundleDiscountRolle,
+    bundleDiscountBoerek,
+    rolleBundleFreeCount,
+    boerekBundleFreeCount,
     cartPricingError,
     isStripeReturnRedirect,
     availableLocations,
@@ -210,6 +214,10 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                 cartSubtotal={cartSubtotal}
                 cartDiscount={cartDiscount}
                 cartDiscountPercent={cartDiscountPercent}
+                bundleDiscountRolle={bundleDiscountRolle}
+                bundleDiscountBoerek={bundleDiscountBoerek}
+                rolleBundleFreeCount={rolleBundleFreeCount}
+                boerekBundleFreeCount={boerekBundleFreeCount}
                 cartTotal={cartTotal}
                 cartPricingError={cartPricingError}
                 onSubmit={handleSubmit}

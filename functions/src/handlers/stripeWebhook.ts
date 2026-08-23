@@ -113,7 +113,7 @@ export const stripeWebhook = onRequest(
 			const orderDoc = snapshot.docs[0];
 			const updateData: Record<string, unknown> = {
 				"payment.status": paymentStatus,
-				"payment.stripePaymentIntentId": paymentIntent.id,
+				"payment.stripePaymentId": paymentIntent.id,
 				updatedAt: new Date(),
 			};
 

@@ -25,7 +25,7 @@ export default function ProductsPage() {
   useEffect(() => {
     fetchAllProducts()
       .then((data) => {
-        console.log('[products] fetched:', data.length, data);
+        // console.log('[products] fetched:', data.length, data);
         setProducts(data);
       })
       .catch((err) => {
@@ -181,6 +181,7 @@ export default function ProductsPage() {
                     pricePer100g: t('pricePer100g'),
                     pricePerPiece: t('pricePerPiece'),
                     pieces: t('pieces'),
+                    seasonal: t('seasonal'),
                   }}
                   translatedCategory={getTranslatedCategory(product.categoryName)}
                 />

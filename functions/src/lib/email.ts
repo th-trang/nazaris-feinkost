@@ -283,3 +283,121 @@ export const sendOrderConfirmationEmail = async (
 		console.error("Failed to send order confirmation email:", error);
 	}
 };
+
+// ─── Cancellation email ───────────────────────────────────────────────────────
+
+interface OrderCancellationData {
+	orderNumber: string;
+	firstName: string;
+	lastName: string;
+	email: string;
+	pickupDate: string;
+	pickupLocation: string;
+	refunded: boolean;
+	refundId?: string | null;
+}
+
+const buildCancellationHtml = (data: OrderCancellationData): string => {
+	const {orderNumber, firstName, lastName, pickupDate, pickupLocation, refunded, refundId} = data;
+	const formattedDate = pickupDate ? formatGermanDate(pickupDate) : pickupDate;
+	const refundSection = refunded
+		? `<p style="margin:0;font-size:14px;color:#333;">Ihre Zahlung wird in K&uuml;rze erstattet. Die R&uuml;ckerstattung erscheint in wenigen Werktagen auf Ihrem Konto.${refundId ? ` (Referenz: ${escapeHtml(refundId)})` : ""}</p>`
+		: `<p style="margin:0;font-size:14px;color:#333;">Ihre Bestellung wurde kostenfrei storniert, da keine Zahlung erfolgt ist.</p>`;
+
+	return `<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f5f5f5;font-family:Arial,sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:32px 0;">
+<tr><td align="center">
+<table width="600" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;max-width:600px;">
+
+	<!-- HEADER -->
+	<tr>
+		<td style="background:#d32f2f;padding:32px 36px;text-align:center;">
+			<p style="margin:0 0 8px;font-size:13px;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,0.8);">Nazari&apos;s Feinkost</p>
+			<h1 style="margin:0;font-size:26px;font-weight:700;color:#ffffff;">Bestellung storniert</h1>
+			<p style="margin:8px 0 0;font-size:15px;color:rgba(255,255,255,0.9);">Bestellnummer: <strong>${escapeHtml(orderNumber)}</strong></p>
+		</td>
+	</tr>
+
+	<!-- GREETING -->
+	<tr>
+		<td style="padding:32px 36px 0;">
+			<p style="margin:0 0 8px;font-size:16px;color:#1a1a1a;">Hallo ${escapeHtml(firstName)} ${escapeHtml(lastName)},</p>
+			<p style="margin:0;font-size:14px;color:#555;line-height:1.6;">Ihre Bestellung <strong>${escapeHtml(orderNumber)}</strong> wurde erfolgreich widerrufen.</p>
+		</td>
+	</tr>
+
+	<!-- ORDER DETAILS -->
+	<tr>
+		<td style="padding:24px 36px 0;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e5e7eb;">
+				<tr><td style="padding:18px 0;">
+					<p style="margin:0 0 14px;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#d32f2f;font-weight:700;">Stornierte Bestellung</p>
+					<p style="margin:0 0 8px;font-size:14px;color:#333;">&#128197; Abholdatum: ${escapeHtml(formattedDate)}</p>
+					<p style="margin:0;font-size:14px;color:#333;">&#128205; Abholort: ${escapeHtml(pickupLocation)}</p>
+				</td></tr>
+			</table>
+		</td>
+	</tr>
+
+	<!-- REFUND INFO -->
+	<tr>
+		<td style="padding:0 36px 8px;">
+			<table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #e5e7eb;">
+				<tr><td style="padding:18px 0;">
+					<p style="margin:0 0 14px;font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:#d32f2f;font-weight:700;">R&uuml;ckerstattung</p>
+					${refundSection}
+				</td></tr>
+			</table>
+		</td>
+	</tr>
+
+	<!-- FOOTER -->
+	<tr>
+		<td style="padding:24px 36px 32px;text-align:center;border-top:1px solid #e5e7eb;">
+			<p style="margin:0 0 8px;font-size:14px;color:#777;">Bei Fragen antworten Sie einfach auf diese E-Mail.</p>
+			<p style="margin:0;font-size:12px;color:#bbb;">&copy; ${new Date().getFullYear()} Nazari&apos;s Feinkost</p>
+		</td>
+	</tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+};
+
+export const sendOrderCancellationEmail = async (
+	data: OrderCancellationData,
+): Promise<void> => {
+	const host = smtpHost.value();
+	const port = Number(smtpPort.value());
+	const user = smtpUser.value();
+	const pass = smtpPass.value();
+	const from = smtpFrom.value();
+
+	if (!host || !user || !pass) {
+		console.warn("Cancellation email skipped: SMTP secrets not configured.");
+		return;
+	}
+
+	const transporter = createTransport({
+		host,
+		port: port || 587,
+		secure: port === 465,
+		auth: {user, pass},
+	});
+
+	try {
+		await transporter.sendMail({
+			from,
+			to: data.email,
+			subject: `Bestellung storniert – ${data.orderNumber}`,
+			html: buildCancellationHtml(data),
+		});
+	} catch (error) {
+		console.error("Failed to send cancellation email:", error);
+	}
+};

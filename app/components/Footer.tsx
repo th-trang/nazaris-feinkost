@@ -75,6 +75,12 @@ export default function Footer() {
                 >
                   {t("privacy")}
                 </Link>
+                <Link
+                  href={`/${locale}/widerruf`}
+                  className="text-gray-800 hover:text-green-600 transition-colors underline-offset-4"
+                >
+                  {t("widerruf")}
+                </Link>
               </nav>
               <p className="text-gray-800 text-xs">
                 {t("copyright", { year })}

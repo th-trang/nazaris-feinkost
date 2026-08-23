@@ -30,6 +30,10 @@ interface CartContextType {
   cartSubtotal: number;
   cartDiscountPercent: number;
   cartDiscount: number;
+  bundleDiscountRolle: number;
+  bundleDiscountBoerek: number;
+  rolleBundleFreeCount: number;
+  boerekBundleFreeCount: number;
   cartTotal: number;
   minimumOrderMet: boolean;
   cartPricingError: string | null;
@@ -135,8 +139,49 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const MINIMUM_ORDER = 10;
 
-  const cartDiscountPercent = cartSubtotal > 100 ? 15 : cartSubtotal > 50 ? 10 : 0;
-  const cartDiscount = roundCurrency(cartSubtotal * (cartDiscountPercent / 100));
+  // ── Bundle deal calculations ────────────────────────────────────────────────
+  const getPricePerPiece = (item: CartItem): number =>
+    item.pricingUnit === "per_item" && item.pieces && item.pieces > 0
+      ? roundCurrency(item.price / item.pieces)
+      : roundCurrency(item.price / item.quantity);
+
+  const rolleItems = cartItems.filter(
+    (item) => normalizeLabel(item.category) === "rolle"
+  );
+  const boerekItems = cartItems.filter(
+    (item) => normalizeLabel(item.name).includes("boerek")
+  );
+
+  const rolleTotalPieces = rolleItems.reduce(
+    (sum, item) => sum + (item.pricingUnit === "per_item" && item.pieces ? item.pieces : item.quantity),
+    0
+  );
+  const boerekTotalPieces = boerekItems.reduce(
+    (sum, item) => sum + (item.pricingUnit === "per_item" && item.pieces ? item.pieces : item.quantity),
+    0
+  );
+
+  const rolleBundleFreeCount = Math.floor(rolleTotalPieces / 5);
+  const bundleDiscountRolle =
+    rolleBundleFreeCount > 0 && rolleItems.length > 0
+      ? roundCurrency(rolleBundleFreeCount * Math.min(...rolleItems.map(getPricePerPiece)))
+      : 0;
+
+  const boerekBundleFreeCount = Math.floor(boerekTotalPieces / 11);
+  const bundleDiscountBoerek =
+    boerekBundleFreeCount > 0 && boerekItems.length > 0
+      ? roundCurrency(boerekBundleFreeCount * Math.min(...boerekItems.map(getPricePerPiece)))
+      : 0;
+
+  const totalBundleDiscount = roundCurrency(bundleDiscountRolle + bundleDiscountBoerek);
+
+  // ── % discount vs bundle — use the better one ──────────────────────────────
+  const rawDiscountPercent = cartSubtotal > 100 ? 15 : cartSubtotal > 50 ? 10 : 0;
+  const cartPercentDiscount = roundCurrency(cartSubtotal * (rawDiscountPercent / 100));
+  const useBundleDiscount = totalBundleDiscount >= cartPercentDiscount;
+
+  const cartDiscountPercent = useBundleDiscount ? 0 : rawDiscountPercent;
+  const cartDiscount = useBundleDiscount ? totalBundleDiscount : cartPercentDiscount;
   const cartTotal = roundCurrency(cartSubtotal - cartDiscount);
   const minimumOrderMet = cartSubtotal >= MINIMUM_ORDER;
 
@@ -162,6 +207,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
         cartSubtotal,
         cartDiscountPercent,
         cartDiscount,
+        bundleDiscountRolle,
+        bundleDiscountBoerek,
+        rolleBundleFreeCount,
+        boerekBundleFreeCount,
         cartTotal,
         minimumOrderMet,
         cartPricingError,

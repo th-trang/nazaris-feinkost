@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
+import { isMarketOpenDay } from "@/app/lib/helper/marketDays";
 
 interface DatePickerProps {
   value: string;
@@ -84,8 +85,9 @@ export default function DatePicker({
   };
 
   const isDateDisabled = (day: number) => {
-    if (!minDate) return false;
     const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    if (!isMarketOpenDay(date)) return true;
+    if (!minDate) return false;
     const minDateNormalized = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
     return date < minDateNormalized;
   };
