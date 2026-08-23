@@ -70,7 +70,7 @@ export function csvRowToProduct(row: CsvRow, categoryId: string): ProductDocumen
     description: row.Beschreibung?.trim() ?? "",
     price,
     priceUnit: mapPriceUnit(row.Preiseinheit),
-    imageUrl: row.Bilder?.trim() || null,
+    imageUrl: parseImageUrl(row.Bilder),
     mhd: mapMhd(row.Mindesthaltbarkeit),
     availableFrom,
     availableTo,
@@ -120,8 +120,13 @@ export function productToCsvRow(
 
 // ─── Field parsers ────────────────────────────────────────────────────────────
 
-function parsePrice(raw: string | undefined | null): number {
-  if (!raw || !raw.trim()) return 0; // price not yet set in CSV
+// Some CSV rows pack multiple comma-separated URLs into one cell; use the first.
+function parseImageUrl(raw: string | undefined | null): string | null {
+  if (!raw || !raw.trim()) return null;
+  return raw.split(",")[0].trim() || null;
+}
+
+function parsePrice(raw: string | undefined | null): number {  if (!raw || !raw.trim()) return 0; // price not yet set in CSV
   const normalised = raw.trim().replace(",", ".");
   const n = parseFloat(normalised);
   if (isNaN(n)) throw new Error(`Invalid price: "${raw}"`);
