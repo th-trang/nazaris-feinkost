@@ -8,6 +8,7 @@ export interface CsvRow {
   Kategorie: string;
   Beschreibung: string;
   Zutaten: string; // semicolon-separated, may be absent in older CSVs
+  Bilder: string; // image URL
   Allergien: string; // comma-separated groups: "gluten,dairy,nuts"
   Scharf: string;
   "Knoblauchintensität": string;
@@ -16,7 +17,7 @@ export interface CsvRow {
   Preis: string;
   Saisonal: string;
   "Verfügbarkeitszeitraum": string;
-  "Mindesten Haltbarkeit": string;
+  Mindesthaltbarkeit: string;
 }
 
 // ─── Firestore document shape ─────────────────────────────────────────────────
@@ -69,8 +70,8 @@ export function csvRowToProduct(row: CsvRow, categoryId: string): ProductDocumen
     description: row.Beschreibung?.trim() ?? "",
     price,
     priceUnit: mapPriceUnit(row.Preiseinheit),
-    imageUrl: null,
-    mhd: mapMhd(row["Mindesten Haltbarkeit"]),
+    imageUrl: row.Bilder?.trim() || null,
+    mhd: mapMhd(row.Mindesthaltbarkeit),
     availableFrom,
     availableTo,
     active: true,
@@ -113,7 +114,7 @@ export function productToCsvRow(
     Saisonal: seasonal ? "Ja" : "Nein",
     "Verfügbarkeitszeitraum":
       seasonal ? `${doc.availableFrom} bis ${doc.availableTo}` : "",
-    "Mindesten Haltbarkeit": mhdStr,
+    Mindesthaltbarkeit: mhdStr,
   };
 }
 
