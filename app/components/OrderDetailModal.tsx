@@ -120,7 +120,7 @@ export default function OrderDetailModal({
           <div className="flex justify-between items-center bg-green-50 rounded-xl p-4">
             <span className="font-medium text-gray-700">{t("total")}</span>
             <span className="text-xl font-semibold text-green-700">
-              {toCurrency(order.totals.subtotal, order.totals.currency, locale)}
+              {toCurrency(order.totals.total ?? order.totals.subtotal, order.totals.currency, locale)}
             </span>
           </div>
 

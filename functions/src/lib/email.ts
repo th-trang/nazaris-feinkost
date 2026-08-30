@@ -1,6 +1,7 @@
 import {createTransport} from "nodemailer";
 import {defineSecret} from "firebase-functions/params";
-import type {CreateOrderInput} from "./types.js";
+import {paymentMethodLabel} from "./paymentMethods.js";
+import type {OrderNotificationPayload} from "./types.js";
 import {locationCatalog} from "../locationCatalog.js";
 
 const smtpHost = defineSecret("SMTP_HOST");
@@ -13,8 +14,13 @@ export const emailSecrets = [smtpHost, smtpPort, smtpUser, smtpPass, smtpFrom];
 
 interface OrderConfirmationData {
 	orderNumber: string;
-	payload: CreateOrderInput;
+	payload: OrderNotificationPayload;
+	/** Value of the items before any discount. */
 	subtotal: number;
+	/** Discount granted on the order, 0 when none applied. */
+	discount: number;
+	/** What the customer actually pays — subtotal minus discount. */
+	total: number;
 }
 
 const GERMAN_DAYS = [
@@ -58,11 +64,8 @@ const escapeHtml = (str: string): string =>
 		.replace(/"/g, "&quot;");
 
 const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
-	const {orderNumber, payload, subtotal} = data;
-	const paymentLabel =
-		payload.paymentMethod === "paypal"
-			? "PayPal"
-			: "Kartenzahlung bei Abholung";
+	const {orderNumber, payload, subtotal, discount, total} = data;
+	const paymentLabel = paymentMethodLabel(payload.paymentMethod);
 
 	const location = findLocation(payload.pickupLocation);
 	const locationAddress = location ? escapeHtml(location.address) : "";
@@ -90,10 +93,17 @@ const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
 					<strong>${escapeHtml(item.name)}</strong>${weightLabel}
 				</td>
 				<td style="padding:12px 8px;border-bottom:1px solid #f0f0f0;text-align:center;font-size:14px;color:#333;vertical-align:middle;">${item.quantity}</td>
-				<td style="padding:12px 0 12px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-size:14px;color:#333;vertical-align:middle;">&euro;${(item.unitPrice * item.quantity).toFixed(2)}</td>
+				<td style="padding:12px 0 12px 8px;border-bottom:1px solid #f0f0f0;text-align:right;font-size:14px;color:#333;vertical-align:middle;">&euro;${item.lineTotal.toFixed(2)}</td>
 			</tr>`;
 		})
 		.join("");
+
+	const discountRow = discount > 0
+		? `<tr>
+					<td colspan="3" style="padding:4px 8px;text-align:right;font-size:13px;color:#28a745;">Rabatt</td>
+					<td style="padding:4px 0 4px 8px;text-align:right;font-size:13px;color:#28a745;">-&euro;${discount.toFixed(2)}</td>
+				</tr>`
+		: "";
 
 	return `<!DOCTYPE html>
 <html lang="de">
@@ -156,16 +166,21 @@ const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
 				</tr>
 				${itemRows}
 				<tr>
-					<td colspan="3" style="padding:10px 8px 4px 0;text-align:right;font-size:13px;color:#888;">Nettobetrag (exkl. MwSt.)</td>
-					<td style="padding:10px 0 4px 8px;text-align:right;font-size:13px;color:#888;">&euro;${(subtotal / 1.07).toFixed(2)}</td>
+					<td colspan="3" style="padding:10px 8px 4px 0;text-align:right;font-size:13px;color:#888;">Zwischensumme</td>
+					<td style="padding:10px 0 4px 8px;text-align:right;font-size:13px;color:#888;">&euro;${subtotal.toFixed(2)}</td>
+				</tr>
+				${discountRow}
+				<tr>
+					<td colspan="3" style="padding:4px 8px;text-align:right;font-size:13px;color:#888;">Nettobetrag (exkl. MwSt.)</td>
+					<td style="padding:4px 0 4px 8px;text-align:right;font-size:13px;color:#888;">&euro;${(total / 1.07).toFixed(2)}</td>
 				</tr>
 				<tr>
 					<td colspan="3" style="padding:4px 8px;text-align:right;font-size:13px;color:#888;">MwSt. 7%</td>
-					<td style="padding:4px 0 4px 8px;text-align:right;font-size:13px;color:#888;">&euro;${(subtotal - subtotal / 1.07).toFixed(2)}</td>
+					<td style="padding:4px 0 4px 8px;text-align:right;font-size:13px;color:#888;">&euro;${(total - total / 1.07).toFixed(2)}</td>
 				</tr>
 				<tr>
 					<td colspan="3" style="padding:10px 8px 14px 0;text-align:right;font-weight:bold;font-size:15px;color:#333;border-top:1px solid #e5e7eb;">Gesamtbetrag (inkl. MwSt.)</td>
-					<td style="padding:10px 0 14px 8px;text-align:right;font-weight:bold;font-size:20px;color:#28a745;border-top:1px solid #e5e7eb;">&euro;${subtotal.toFixed(2)}</td>
+					<td style="padding:10px 0 14px 8px;text-align:right;font-weight:bold;font-size:20px;color:#28a745;border-top:1px solid #e5e7eb;">&euro;${total.toFixed(2)}</td>
 				</tr>
 			</table>
 		</td>

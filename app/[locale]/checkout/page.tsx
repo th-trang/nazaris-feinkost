@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { useCart } from "@/app/context/CartContext";
 import StripeProvider from "@/app/components/StripeProvider";
 import { CheckoutForm } from "./CheckoutForm";
+import { createPaymentIntent } from "@/app/lib/firebase/payments";
+import { toCartLines } from "@/app/lib/checkout/cartLines";
 
 export default function CheckoutPage() {
   const { cartItems, cartTotal, cartPricingError } = useCart();
@@ -43,37 +45,42 @@ export default function CheckoutPage() {
       return;
     }
 
-    const controller = new AbortController();
+    // Nothing to price yet — the effect below sends the visitor to /products.
+    if (cartItems.length === 0) return;
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     const tomorrowStr = tomorrow.toISOString().split("T")[0];
 
-    fetch("/api/stripe/create-payment-intent", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ amount: cartTotal, pickupDate: tomorrowStr }),
-      signal: controller.signal,
+    // The amount is derived from the catalog by the backend; we only say what
+    // is in the cart.
+    let cancelled = false;
+
+    createPaymentIntent({
+      items: toCartLines(cartItems),
+      pickupDate: tomorrowStr,
     })
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Payment Intent Response:", data);
-        if (data.clientSecret) {
-          setClientSecret(data.clientSecret);
-          console.log("Client Secret set:", data.clientSecret);
-          if (data.paymentIntentId)  setPaymentIntentId(data.paymentIntentId);
-          if (data.expiresAt)  setExpiresAt(data.expiresAt);
-        } else {
-          setInitError(data.error || "Failed to initialize payment.");
-        }
+      .then((session) => {
+        if (cancelled) return;
+        setClientSecret(session.clientSecret);
+        setPaymentIntentId(session.paymentIntentId);
+        setExpiresAt(session.expiresAt);
       })
       .catch((err) => {
-        if (err.name !== "AbortError") {
-          setInitError("Failed to initialize payment.");
-        }
+        if (cancelled) return;
+        setInitError(
+          err instanceof Error && err.message
+            ? err.message
+            : "Failed to initialize payment.",
+        );
       });
 
-    return () => controller.abort();
+    return () => {
+      cancelled = true;
+    };
+    // cartItems is intentionally read, not tracked: re-running on every cart
+    // edit would open a new payment session mid-checkout.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cartPricingError, cartTotal, isStripeReturn, isCheckoutComplete, returnClientSecret, retryKey]);
 
   useEffect(() => {
@@ -111,6 +118,7 @@ export default function CheckoutPage() {
     <StripeProvider clientSecret={clientSecret} locale={locale}>
       <CheckoutForm 
       paymentIntentId={paymentIntentId} 
+      clientSecret={clientSecret}
       expiresAt={expiresAt} 
       onSuccess={() => setIsCheckoutComplete(true)} 
       onPaymentFailed={() => setRetryKey(k => k + 1)}

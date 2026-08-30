@@ -14,6 +14,12 @@ if (process.env.FUNCTIONS_EMULATOR === "true") {
 }
 
 export {createOrder} from "./handlers/createOrder.js";
+export {
+  bindOrderToPaymentIntent,
+  cancelPaymentIntent,
+  createPaymentIntent,
+  updatePaymentIntent,
+} from "./handlers/paymentIntent.js";
 export {syncLocationsCatalog} from "./handlers/syncLocationsCatalog.js";
 export {notifyUpcomingOrders, triggerUpcomingOrdersDigest} from "./handlers/notifyUpcomingOrders.js";
 export {onOrderPaid} from "./handlers/onOrderPaid.js";

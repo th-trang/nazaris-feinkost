@@ -53,7 +53,7 @@ export default function OrderCard({
   
           <div>
             <p className="text-gray-500">{t("total")}</p>
-            <p className="text-gray-900">{toCurrency(order.totals.subtotal, order.totals.currency, locale)}</p>
+            <p className="text-gray-900">{toCurrency(order.totals.total ?? order.totals.subtotal, order.totals.currency, locale)}</p>
           </div>
         </div>
       </button>

@@ -2,18 +2,11 @@ import {onDocumentUpdated} from "firebase-functions/v2/firestore";
 import {defineSecret} from "firebase-functions/params";
 import {sendOrderConfirmationEmail, emailSecrets} from "../lib/email.js";
 import {sendTelegramNotification} from "../lib/telegram.js";
-import type {CreateOrderInput} from "../lib/types.js";
+import {paymentMethodLabel} from "../lib/paymentMethods.js";
+import type {OrderNotificationPayload, ResolvedPaymentMethod, StoredOrderItem} from "../lib/types.js";
 
 const telegramBotToken = defineSecret("TELEGRAM_BOT_TOKEN");
 const telegramChatId = defineSecret("TELEGRAM_CHAT_ID");
-
-const PAYMENT_METHOD_LABELS: Record<string, string> = {
-	card: "Karte",
-	paypal: "PayPal",
-	sepa_debit: "SEPA-Lastschrift",
-	google_pay: "Google Pay",
-	apple_pay: "Apple Pay",
-};
 
 export const onOrderPaid = onDocumentUpdated(
 	{
@@ -35,6 +28,16 @@ export const onOrderPaid = onDocumentUpdated(
 		const orderNumber: string = after.orderNumber;
 		const method: string = after.payment?.method ?? "card";
 		const subtotal: number = after.totals?.subtotal ?? 0;
+		const discount: number = after.totals?.discount ?? 0;
+		// Orders written before totals carried a discount only stored the subtotal.
+		const total: number = after.totals?.total ?? subtotal;
+		const items: StoredOrderItem[] = (after.items ?? []).map(
+			(item: Partial<StoredOrderItem>): StoredOrderItem => ({
+				...(item as StoredOrderItem),
+				lineTotal:
+					item.lineTotal ?? (item.unitPrice ?? 0) * (item.quantity ?? 0),
+			}),
+		);
 
 		// --- Telegram notification ---
 		const notificationLines = [
@@ -44,13 +47,19 @@ export const onOrderPaid = onDocumentUpdated(
 			`Telefon: ${after.customer?.phone ?? after.customerPhone}`,
 			`Abholdatum: ${after.pickup?.date ?? after.pickupDate}`,
 			`Abholort: ${after.pickup?.location ?? after.pickupLocation}`,
-			`Zahlungsmethode: ${PAYMENT_METHOD_LABELS[method] ?? method}`,
-			`Summe: ${subtotal.toFixed(2)} EUR`,
+			`Zahlungsmethode: ${paymentMethodLabel(method)}`,
+			...(discount > 0
+				? [
+					`Zwischensumme: ${subtotal.toFixed(2)} EUR`,
+					`Rabatt: -${discount.toFixed(2)} EUR`,
+				]
+				: []),
+			`Summe: ${total.toFixed(2)} EUR`,
 			"",
 			"Artikel:",
-			...(after.items ?? []).map(
-				(item: {name: string; quantity: number; unitPrice: number; weightInGrams?: number}) =>
-					`- ${item.quantity}x ${item.name} (${item.unitPrice.toFixed(2)} EUR${
+			...items.map(
+				(item) =>
+					`- ${item.quantity}x ${item.name} (${item.lineTotal.toFixed(2)} EUR${
 						item.weightInGrams ? `, ${item.weightInGrams} g` : ""
 					})`,
 			),
@@ -63,7 +72,7 @@ export const onOrderPaid = onDocumentUpdated(
 		);
 
 		// --- Confirmation email ---
-		const payload: CreateOrderInput = {
+		const payload: OrderNotificationPayload = {
 			firstName: after.customer?.firstName ?? "",
 			lastName: after.customer?.lastName ?? "",
 			email: after.customer?.email ?? after.customerEmail ?? "",
@@ -71,10 +80,11 @@ export const onOrderPaid = onDocumentUpdated(
 			pickupDate: after.pickup?.date ?? after.pickupDate ?? "",
 			pickupLocation: after.pickup?.location ?? after.pickupLocation ?? "",
 			specialRequests: after.specialRequests,
-			paymentMethod: method === "paypal" ? "paypal" : "card",
-			items: after.items ?? [],
+			// Keep the wallet the customer actually used (Apple Pay, Google Pay …).
+			paymentMethod: method as ResolvedPaymentMethod,
+			items,
 		};
 
-		await sendOrderConfirmationEmail({orderNumber, payload, subtotal});
+		await sendOrderConfirmationEmail({orderNumber, payload, subtotal, discount, total});
 	},
 );

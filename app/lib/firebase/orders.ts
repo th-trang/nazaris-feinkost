@@ -6,7 +6,7 @@ import {
   CreateOrderInput,
   CreateOrderResponse,
   CreateStaffUserInput,
-  PaymentMethod,
+  ResolvedPaymentMethod,
   StaffOrder,
   StaffOrderItem,
   StaffOrdersResult,
@@ -31,8 +31,16 @@ export const createOrder = async (
   return result.data;
 };
 
-const asPaymentMethod = (value: unknown): PaymentMethod =>
-  value === "paypal" ? "paypal" : "card";
+const RESOLVED_PAYMENT_METHODS: ResolvedPaymentMethod[] = [
+  "card",
+  "paypal",
+  "sepa_debit",
+  "google_pay",
+  "apple_pay",
+];
+
+const asPaymentMethod = (value: unknown): ResolvedPaymentMethod =>
+  RESOLVED_PAYMENT_METHODS.find((method) => method === value) ?? "card";
 
 const toStaffOrderItems = (items: unknown): StaffOrderItem[] => {
   if (!Array.isArray(items)) {
@@ -43,7 +51,12 @@ const toStaffOrderItems = (items: unknown): StaffOrderItem[] => {
     name: String(item.name ?? ""),
     quantity: Number(item.quantity ?? 0),
     unitPrice: Number(item.unitPrice ?? 0),
+    // Orders written before lines carried their own total.
+    lineTotal: Number(
+      item.lineTotal ?? Number(item.unitPrice ?? 0) * Number(item.quantity ?? 0),
+    ),
     weightInGrams: item.weightInGrams ? Number(item.weightInGrams) : undefined,
+    pieces: item.pieces ? Number(item.pieces) : undefined,
   }));
 };
 
@@ -75,6 +88,9 @@ const toStaffOrder = (id: string, data: Record<string, unknown>): StaffOrder => 
     },
     totals: {
       subtotal: Number(totals.subtotal ?? 0),
+      discount: Number(totals.discount ?? 0),
+      // Orders written before discounts were stored only had the subtotal.
+      total: Number(totals.total ?? totals.subtotal ?? 0),
       currency: String(totals.currency ?? "EUR"),
     },
     items: toStaffOrderItems(data.items),

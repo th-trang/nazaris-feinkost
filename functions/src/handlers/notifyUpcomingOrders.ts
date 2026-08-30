@@ -22,7 +22,7 @@ interface UpcomingOrderData {
 	customerName: string;
 	customerPhone: string;
 	pickup: {date: string; location: string};
-	totals: {subtotal: number; currency: string};
+	totals: {subtotal: number; discount?: number; total?: number; currency: string};
 	items: Array<{
 		name: string;
 		quantity: number;
@@ -148,7 +148,8 @@ const buildMessage = (
 				`Name: ${order.customerName}`,
 				`Telefon: ${order.customerPhone}`,
 				`Abholort: ${order.pickup.location}`,
-				`Summe: ${order.totals.subtotal.toFixed(2)} ${order.totals.currency}`,
+				// Older orders only stored the pre-discount subtotal.
+				`Summe: ${(order.totals.total ?? order.totals.subtotal).toFixed(2)} ${order.totals.currency}`,
 				"Artikel:",
 				...order.items.map(
 					(item) =>

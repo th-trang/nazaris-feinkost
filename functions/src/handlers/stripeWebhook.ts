@@ -2,6 +2,9 @@ import {onRequest} from "firebase-functions/v2/https";
 import {defineSecret} from "firebase-functions/params";
 import {getFirestore} from "firebase-admin/firestore";
 import Stripe from "stripe";
+import {toMinorUnits} from "../lib/money.js";
+import {PAYMENT_METHOD_MAP} from "../lib/paymentMethods.js";
+import {findOrderByNumber} from "../lib/orders.js";
 
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const stripeWebhookSecret = defineSecret("STRIPE_WEBHOOK_SECRET");
@@ -12,12 +15,53 @@ const PAYMENT_STATUS_MAP: Record<string, string> = {
 	"payment_intent.canceled": "canceled",
 };
 
-const PAYMENT_METHOD_MAP: Record<string, string> = {
-	card: "card",
-	paypal: "paypal",
-	sepa_debit: "sepa_debit",
-	google_pay: "google_pay",
-	apple_pay: "apple_pay",
+/**
+ * Works out which method the customer actually used.
+ *
+ * Apple Pay and Google Pay are not payment method types of their own — they
+ * settle as `card`, so payment_method_types reports plain "card" for them. The
+ * wallet is only visible on the resulting charge, which is why this reads the
+ * charge rather than the intent.
+ */
+const resolvePaymentMethod = async (
+	stripe: Stripe,
+	paymentIntent: Stripe.PaymentIntent,
+): Promise<string | undefined> => {
+	const declaredType = paymentIntent.payment_method_types?.[0];
+	const fallback = declaredType
+		? PAYMENT_METHOD_MAP[declaredType] ?? declaredType
+		: undefined;
+
+	const chargeId =
+		typeof paymentIntent.latest_charge === "string"
+			? paymentIntent.latest_charge
+			: paymentIntent.latest_charge?.id;
+
+	if (!chargeId) {
+		return fallback;
+	}
+
+	try {
+		const charge = await stripe.charges.retrieve(chargeId);
+		const details = charge.payment_method_details;
+
+		if (!details?.type) {
+			return fallback;
+		}
+
+		if (details.type === "card") {
+			const wallet = details.card?.wallet?.type;
+			return wallet ? PAYMENT_METHOD_MAP[wallet] ?? wallet : "card";
+		}
+
+		return PAYMENT_METHOD_MAP[details.type] ?? details.type;
+	} catch (error) {
+		console.warn(
+			`Webhook: could not read charge ${chargeId} for payment method:`,
+			error,
+		);
+		return fallback;
+	}
 };
 
 export const stripeWebhook = onRequest(
@@ -97,30 +141,48 @@ export const stripeWebhook = onRequest(
 
 		// --- Update the order ---
 		try {
-			const snapshot = await db
-				.collection("orders")
-				.where("orderNumber", "==", orderNumber)
-				.limit(1)
-				.get();
+			const orderDoc = await findOrderByNumber(db, orderNumber);
 
-			if (snapshot.empty) {
+			if (!orderDoc) {
 				console.warn(`Webhook: no order found for orderNumber=${orderNumber}`);
 				await eventRef.update({status: "done", note: "order_not_found", updatedAt: new Date()});
 				res.status(200).json({received: true});
 				return;
 			}
 
-			const orderDoc = snapshot.docs[0];
 			const updateData: Record<string, unknown> = {
 				"payment.status": paymentStatus,
 				"payment.stripePaymentId": paymentIntent.id,
 				updatedAt: new Date(),
 			};
 
-			// Persist the resolved payment method
-			const methodType = paymentIntent.payment_method_types?.[0];
-			if (methodType) {
-				updateData["payment.method"] = PAYMENT_METHOD_MAP[methodType] ?? methodType;
+			// Last line of defence: never mark an order paid for less than it
+			// costs. createOrder already binds the intent to this order at the
+			// catalog total, so a shortfall here means something is wrong.
+			if (paymentStatus === "paid") {
+				const orderTotals = (orderDoc.data()?.totals ?? {}) as Record<string, unknown>;
+				const expected = Number(orderTotals.total ?? orderTotals.subtotal);
+
+				if (Number.isFinite(expected) && expected > 0) {
+					const expectedMinorUnits = toMinorUnits(expected);
+					const received = paymentIntent.amount_received ?? paymentIntent.amount;
+
+					if (received < expectedMinorUnits) {
+						console.error(
+							`Webhook: order ${orderNumber} underpaid — received ${received}, ` +
+							`expected ${expectedMinorUnits}`,
+						);
+						updateData["payment.status"] = "underpaid";
+						updateData["payment.amountReceived"] = received / 100;
+						updateData["payment.amountExpected"] = expected;
+					}
+				}
+			}
+
+			// Persist the resolved payment method, wallet included
+			const resolvedMethod = await resolvePaymentMethod(stripe, paymentIntent);
+			if (resolvedMethod) {
+				updateData["payment.method"] = resolvedMethod;
 			}
 
 			// On failure, store the error message for debugging / customer support

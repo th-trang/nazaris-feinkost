@@ -4,6 +4,7 @@ import {defineSecret} from "firebase-functions/params";
 import Stripe from "stripe";
 import {sendTelegramNotification} from "../lib/telegram.js";
 import {sendOrderCancellationEmail, emailSecrets} from "../lib/email.js";
+import {findOrderCandidates} from "../lib/orders.js";
 
 const stripeSecretKey = defineSecret("STRIPE_SECRET_KEY");
 const telegramBotToken = defineSecret("TELEGRAM_BOT_TOKEN");
@@ -40,20 +41,19 @@ export const widerrufOrder = onCall(FUNCTION_OPTIONS, async (request) => {
   const db = getFirestore();
 
   // ── Find order by orderNumber + customer verification ─────────────────────
-  const snap = await db
-    .collection("orders")
-    .where("orderNumber", "==", orderNumber.trim().toUpperCase())
-    .limit(5)
-    .get();
+  const candidates = await findOrderCandidates(
+    db,
+    orderNumber.trim().toUpperCase(),
+  );
 
-  if (snap.empty) {
+  if (candidates.length === 0) {
     throw new HttpsError("not-found", "not_found");
   }
 
-  let matchedDoc: FirebaseFirestore.QueryDocumentSnapshot | null = null;
+  let matchedDoc: FirebaseFirestore.DocumentSnapshot | null = null;
 
-  for (const doc of snap.docs) {
-    const d = doc.data();
+  for (const doc of candidates) {
+    const d = doc.data() ?? {};
     const customer = (d.customer ?? {}) as Record<string, string>;
 
     if (
@@ -70,7 +70,7 @@ export const widerrufOrder = onCall(FUNCTION_OPTIONS, async (request) => {
     throw new HttpsError("not-found", "not_found");
   }
 
-  const docData = matchedDoc.data();
+  const docData = matchedDoc.data() ?? {};
   const status = String(docData.status ?? "");
   const isComplete = Boolean(docData.isComplete);
   const pickup = (docData.pickup ?? {}) as Record<string, string>;
@@ -85,7 +85,8 @@ export const widerrufOrder = onCall(FUNCTION_OPTIONS, async (request) => {
       isComplete,
       pickupDate: pickup.date ?? "",
       pickupLocation: pickup.location ?? "",
-      total: Number(totals.subtotal ?? 0),
+      // Older orders only stored the pre-discount subtotal.
+      total: Number(totals.total ?? totals.subtotal ?? 0),
       currency: String(totals.currency ?? "EUR"),
     };
   }
@@ -104,7 +105,7 @@ export const widerrufOrder = onCall(FUNCTION_OPTIONS, async (request) => {
   }
 
   const payment = (docData.payment ?? {}) as Record<string, string>;
-  let paymentIntentId: string | null = payment.stripePaymentIntentId ?? null;
+  let paymentIntentId: string | null = payment.stripePaymentId ?? null;
 
   console.log(`[widerrufOrder] Canceling order ${docData.orderNumber} — Firestore status: ${status}, paymentIntentId: ${paymentIntentId ?? "none"}`);
 
@@ -114,9 +115,12 @@ export const widerrufOrder = onCall(FUNCTION_OPTIONS, async (request) => {
   let refundId: string | null = null;
   const stripe = new Stripe(stripeSecretKey.value());
 
-  // If the webhook hasn't stored the ID yet, search Stripe by order number
+  // No stored ID means either the webhook has not written one yet, or the
+  // order predates the rename from stripePaymentIntentId and never carried
+  // it under this name. Both are covered by searching on the metadata the
+  // webhook matches orders by anyway.
   if (!paymentIntentId) {
-    console.log(`[widerrufOrder] payment.stripePaymentIntentId missing — searching Stripe for ${docData.orderNumber}`);
+    console.log(`[widerrufOrder] payment.stripePaymentId missing — searching Stripe for ${docData.orderNumber}`);
     const searchResult = await stripe.paymentIntents.search({
       query: `metadata['orderNumber']:'${docData.orderNumber}' AND status:'succeeded'`,
       limit: 1,

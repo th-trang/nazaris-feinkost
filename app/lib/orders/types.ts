@@ -1,12 +1,34 @@
+/** What the checkout form can declare. */
 export type PaymentMethod = "card" | "paypal" | "sepa_debit";
 
-export interface OrderItemInput {
-  id: string;
-  name: string;
+/**
+ * What a payment can turn out to have settled with. Apple Pay and Google Pay
+ * are wallets on top of `card`, so they only become visible after the charge
+ * exists and the webhook resolves them.
+ */
+export type ResolvedPaymentMethod = PaymentMethod | "google_pay" | "apple_pay";
+
+/**
+ * What the browser may send for one cart line. Prices and product names are
+ * deliberately absent: the backend resolves them from the catalog.
+ */
+export interface CartLineInput {
+  productId: string;
   quantity: number;
-  unitPrice: number;
   weightInGrams?: number;
-  imageUrl?: string;
+  pieces?: number;
+}
+
+export interface OrderTotals {
+  subtotal: number;
+  discount: number;
+  discountPercent: number;
+  bundleDiscountRolle: number;
+  bundleDiscountBoerek: number;
+  rolleBundleFreeCount: number;
+  boerekBundleFreeCount: number;
+  total: number;
+  currency: string;
 }
 
 export interface CreateOrderInput {
@@ -19,13 +41,50 @@ export interface CreateOrderInput {
   specialRequests?: string;
   paymentMethod: PaymentMethod;
   paymentIntentId?: string;
-  items: OrderItemInput[];
+  items: CartLineInput[];
 }
 
 export interface CreateOrderResponse {
   orderId: string;
   orderNumber: string;
   status: "pending";
+  totals: OrderTotals;
+}
+
+export interface CreatePaymentIntentInput {
+  items: CartLineInput[];
+  pickupDate: string;
+}
+
+export interface PaymentSession {
+  clientSecret: string;
+  paymentIntentId: string;
+  expiresAt: string;
+  totals: OrderTotals;
+}
+
+/**
+ * Mutating a payment session requires echoing back its client secret — that is
+ * the proof the caller owns this checkout and not somebody else's.
+ */
+export interface PaymentSessionRef {
+  paymentIntentId: string;
+  clientSecret: string;
+}
+
+export interface UpdatePaymentIntentInput extends PaymentSessionRef {
+  items: CartLineInput[];
+  pickupDate: string;
+}
+
+export interface BindOrderToPaymentIntentInput extends PaymentSessionRef {
+  orderNumber: string;
+}
+
+export interface UpdatePaymentIntentResult {
+  success: boolean;
+  sepaAllowed: boolean;
+  totals: OrderTotals;
 }
 
 export interface StaffOrderItem {
@@ -33,7 +92,9 @@ export interface StaffOrderItem {
   name: string;
   quantity: number;
   unitPrice: number;
+  lineTotal?: number;
   weightInGrams?: number;
+  pieces?: number;
 }
 
 export interface StaffOrder {
@@ -51,11 +112,13 @@ export interface StaffOrder {
     location: string;
   };
   payment: {
-    method: PaymentMethod;
+    method: ResolvedPaymentMethod;
     status: string;
   };
   totals: {
     subtotal: number;
+    discount?: number;
+    total?: number;
     currency: string;
   };
   items: StaffOrderItem[];

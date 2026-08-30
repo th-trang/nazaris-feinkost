@@ -6,6 +6,8 @@ import { useCart } from "@/app/context/CartContext";
 import { useTranslations } from "next-intl";
 import { getDayName, getLocationsForDate } from "@/app/data/LocationList";
 import { createOrder } from "@/app/lib/firebase/orders";
+import { bindOrderToPaymentIntent, cancelPaymentIntent as cancelPaymentSession, updatePaymentIntent } from "@/app/lib/firebase/payments";
+import { toCartLines } from "@/app/lib/checkout/cartLines";
 import { CreateOrderInput } from "@/app/lib/orders/types";
 import {saveCheckoutState, buildReturnUrl, restoreCheckoutState, clearCheckoutState, getCheckoutStateKey} from "@/app/lib/checkout/checkoutState";
 import type { Stripe, StripeElements } from "@stripe/stripe-js";
@@ -17,6 +19,7 @@ export function useCheckout(
   stripe: Stripe | null,
   elements: StripeElements | null,
   paymentIntentId: string | null,
+  clientSecret: string | null,
   expiresAt: string | null,
   onSuccess?: () => void,
   onPaymentFailed?: () => void,
@@ -85,19 +88,17 @@ export function useCheckout(
   // const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   // const [isExpired, setIsExpired] = useState(false);
   const [pendingOrderNumber, setPendingOrderNumber] = useState<string | null>(null);
+  // Which payment session the pending order is currently attached to.
+  const [boundPaymentIntentId, setBoundPaymentIntentId] = useState<string | null>(null);
 
   const cancelPaymentIntent = useCallback(async () => {
-    if (!paymentIntentId) return;
+    if (!paymentIntentId || !clientSecret) return;
     try {
-      await fetch("/api/stripe/create-payment-intent", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ paymentIntentId }),
-      });
+      await cancelPaymentSession({ paymentIntentId, clientSecret });
     } catch (err) {
       console.error("Failed to cancel expired PaymentIntent", err);
     }
-  }, [paymentIntentId]);
+  }, [paymentIntentId, clientSecret]);
 
   const [availableLocations, setAvailableLocations] = useState(() => {
     return getLocationsForDate(tomorrow);
@@ -107,19 +108,20 @@ export function useCheckout(
   // selected pickup date, then syncs the Payment Element with fetchUpdates().
   const updatePaymentMethodsForDate = useCallback(
     async (dateStr: string) => {
-      if (!paymentIntentId) return;
+      if (!paymentIntentId || !clientSecret) return;
       try {
-        await fetch("/api/stripe/create-payment-intent", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ paymentIntentId, pickupDate: dateStr }),
+        await updatePaymentIntent({
+          paymentIntentId,
+          clientSecret,
+          pickupDate: dateStr,
+          items: toCartLines(cartItems),
         });
         await elements?.fetchUpdates();
       } catch (err) {
         console.error("Failed to update payment methods for pickup date", err);
       }
     },
-    [paymentIntentId, elements],
+    [paymentIntentId, clientSecret, cartItems, elements],
   );
 
   const selectedDate = new Date(formData.pickupDate);
@@ -328,37 +330,35 @@ export function useCheckout(
       specialRequests: formData.specialRequests?.trim(),
       paymentMethod: formData.paymentMethod === "paypal" ? "paypal" : formData.paymentMethod === "sepa_debit" ? "sepa_debit" : "card",
       paymentIntentId: paymentIntentId ?? undefined,
-      items: cartItems.map((item) => ({
-        id: item.id,
-        name: item.name,
-        quantity: item.quantity,
-        unitPrice: item.price,
-        ...(item.weightInGrams != null && { weightInGrams: item.weightInGrams }),
-        ...(item.image && { imageUrl: item.image }),
-      })),
+      items: toCartLines(cartItems),
     };
 
     try {
       setIsSubmitting(true);
 
       let currentOrderNumber: string | null = pendingOrderNumber;
-      let currentPaymentIntentId = paymentIntentId;
 
       // Only create a new order on the first attempt; retries reuse the existing order
       if (!currentOrderNumber) {
+        // createOrder re-prices the cart, refuses to proceed unless the payment
+        // session matches that total, and attaches the order number itself.
         const result = await createOrder(payload);
         currentOrderNumber = result.orderNumber;
         setPendingOrderNumber(currentOrderNumber);
-
-        // Attach order number to PaymentIntent so the webhook can match it
-        await fetch("/api/stripe/create-payment-intent", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            paymentIntentId: currentPaymentIntentId,
-            orderNumber: currentOrderNumber,
-          }),
+        setBoundPaymentIntentId(paymentIntentId);
+      } else if (
+        paymentIntentId &&
+        clientSecret &&
+        paymentIntentId !== boundPaymentIntentId
+      ) {
+        // A declined payment opened a fresh session — attach the existing order
+        // to it, otherwise the webhook cannot match the payment.
+        await bindOrderToPaymentIntent({
+          paymentIntentId,
+          clientSecret,
+          orderNumber: currentOrderNumber,
         });
+        setBoundPaymentIntentId(paymentIntentId);
       }
 
       const origin = window.location.origin;

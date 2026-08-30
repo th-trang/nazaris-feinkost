@@ -6,7 +6,7 @@ import OrderSummary from "@/app/components/OrderSummary";
 import { ContactInformationForm } from "@/app/components/ContactInformationForm";
 import PickupForm from "@/app/components/PickupForm";
 
-export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentFailed }: { paymentIntentId: string | null; expiresAt: string | null; onSuccess?: () => void; onPaymentFailed?: () => void }) {
+export function CheckoutForm({ paymentIntentId, clientSecret, expiresAt, onSuccess, onPaymentFailed }: { paymentIntentId: string | null; clientSecret: string | null; expiresAt: string | null; onSuccess?: () => void; onPaymentFailed?: () => void }) {
   const locale = useLocale();
   const stripe = useStripe();
   const elements = useElements();
@@ -39,7 +39,7 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
     handleSubmit,
     handleExpressCheckoutConfirm,
     setPickupDate,
-  } = useCheckout(stripe, elements, paymentIntentId, expiresAt, onSuccess, onPaymentFailed);
+  } = useCheckout(stripe, elements, paymentIntentId, clientSecret, expiresAt, onSuccess, onPaymentFailed);
 
   // Show nothing while redirecting
   if (cartItems.length === 0 && !isSubmitted && !isStripeReturnRedirect) {
@@ -176,14 +176,29 @@ export function CheckoutForm({ paymentIntentId, expiresAt, onSuccess, onPaymentF
                     onConfirm={(event) => {
                       void handleExpressCheckoutConfirm(event as any);
                     }}
+                    onReady={({ availablePaymentMethods }) => {
+                      if (process.env.NODE_ENV !== "production") {
+                        // Tells you exactly which wallets Stripe considers
+                        // available here — undefined means none at all.
+                        console.info(
+                          "[checkout] wallets available:",
+                          availablePaymentMethods,
+                        );
+                      }
+                    }}
                     options={{
                       buttonType: {
                         applePay: "buy",
                         googlePay: "buy",
                       },
+                      // "always" rather than "auto": with "auto" Stripe hides
+                      // Apple Pay on non-Safari desktop browsers and Google Pay
+                      // on Safari/Firefox, and hides either one when the
+                      // customer has no card set up in that wallet. Unsupported
+                      // platforms and currencies still hide the button.
                       paymentMethods: {
-                        applePay: "auto",
-                        googlePay: "auto",
+                        applePay: "always",
+                        googlePay: "always",
                       },
                     }}
                   />

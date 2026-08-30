@@ -1,5 +1,9 @@
 import {HttpsError} from "firebase-functions/v2/https";
-import type {CreateOrderInput, OrderItemInput} from "./types.js";
+import {roundCurrency} from "./money.js";
+import {assertValidCartLines} from "./pricing.js";
+import type {CreateOrderInput} from "./types.js";
+
+export {roundCurrency};
 
 export const validateEmail = (email: string): boolean => {
 	const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -14,9 +18,12 @@ export const validatePhone = (phone: string): boolean => {
 	return phoneRegex.test(phone) && phone.replace(/[\s-]/g, "").length >= 6;
 };
 
-export const roundCurrency = (amount: number): number =>
-	Math.round((amount + Number.EPSILON) * 100) / 100;
-
+/**
+ * Validates the customer and pickup details and the *shape* of the cart.
+ * Deliberately no prices or product names: those are resolved from the
+ * Firestore catalog in createOrder, so nothing a client sends can affect
+ * what an order costs.
+ */
 export const assertValidCreateOrderPayload = (
 	payload: unknown,
 ): CreateOrderInput => {
@@ -34,7 +41,6 @@ export const assertValidCreateOrderPayload = (
 	const pickupLocation = (parsed.pickupLocation ?? "").trim();
 	const specialRequests = (parsed.specialRequests ?? "").trim();
 	const paymentMethod = parsed.paymentMethod;
-	const items = parsed.items;
 
 	if (!firstName || !lastName) {
 		throw new HttpsError(
@@ -69,73 +75,6 @@ export const assertValidCreateOrderPayload = (
 		throw new HttpsError("invalid-argument", "Invalid payment method.");
 	}
 
-	if (!Array.isArray(items) || items.length === 0) {
-		throw new HttpsError(
-			"invalid-argument",
-			"At least one item is required.",
-		);
-	}
-
-	const sanitizedItems: OrderItemInput[] = items.map((item) => {
-		if (!item || typeof item !== "object") {
-			throw new HttpsError("invalid-argument", "Order item is invalid.");
-		}
-
-		const parsedItem = item as Partial<OrderItemInput>;
-		const id = (parsedItem.id ?? "").trim();
-		const name = (parsedItem.name ?? "").trim();
-		const quantity = Number(parsedItem.quantity ?? 0);
-		const unitPrice = Number(parsedItem.unitPrice ?? -1);
-		const rawWeight = parsedItem.weightInGrams;
-
-		if (!id || !name) {
-			throw new HttpsError(
-				"invalid-argument",
-				"Order item id and name are required.",
-			);
-		}
-
-		if (!Number.isInteger(quantity) || quantity <= 0) {
-			throw new HttpsError(
-				"invalid-argument",
-				"Order item quantity must be a positive integer.",
-			);
-		}
-
-		if (!Number.isFinite(unitPrice) || unitPrice < 0) {
-			throw new HttpsError(
-				"invalid-argument",
-				"Order item unit price must be non-negative.",
-			);
-		}
-
-		let weightInGrams: number | undefined;
-		if (rawWeight !== undefined && rawWeight !== null) {
-			const w = Number(rawWeight);
-			if (!Number.isInteger(w) || w <= 0) {
-				throw new HttpsError(
-					"invalid-argument",
-					"Order item weightInGrams must be a positive integer when provided.",
-				);
-			}
-			weightInGrams = w;
-		}
-
-		const result: OrderItemInput = {
-			id,
-			name,
-			quantity,
-			unitPrice: roundCurrency(unitPrice),
-		};
-		if (weightInGrams !== undefined) {
-			result.weightInGrams = weightInGrams;
-		}
-		if (typeof parsedItem.imageUrl === "string" && parsedItem.imageUrl) {
-			result.imageUrl = parsedItem.imageUrl;
-		}
-		return result;
-	});
-
 	return {
 		firstName,
 		lastName,
@@ -148,6 +87,6 @@ export const assertValidCreateOrderPayload = (
 		paymentIntentId: typeof parsed.paymentIntentId === "string" && parsed.paymentIntentId.trim()
 			? parsed.paymentIntentId.trim()
 			: undefined,
-		items: sanitizedItems,
+		items: assertValidCartLines(parsed.items),
 	};
 };
