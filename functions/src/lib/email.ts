@@ -63,6 +63,23 @@ const escapeHtml = (str: string): string =>
 		.replace(/>/g, "&gt;")
 		.replace(/"/g, "&quot;");
 
+/** Public site the mails link back to. Override per environment if it moves. */
+const siteUrl = (process.env.SITE_URL ?? "https://nazaris-feinkost.web.app")
+	.replace(/\/+$/, "");
+
+/** Widerruf page with the order number pre-filled — name and e-mail are still
+ * asked for there, so the link alone cannot cancel anything. */
+const cancellationUrl = (orderNumber: string): string =>
+	`${siteUrl}/de/widerruf?order=${encodeURIComponent(orderNumber)}`;
+
+/**
+ * Cloudinary serves the product shots at full size and Outlook ignores
+ * object-fit, so it stretches anything non-square. Ask Cloudinary for a square
+ * crop at 2x the 44px display size instead — correct aspect, smaller mail.
+ */
+const emailThumbnail = (url: string): string =>
+	url.replace(/\/image\/upload\/(?!c_fill)/, "/image/upload/c_fill,w_88,h_88,q_auto/");
+
 const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
 	const {orderNumber, payload, subtotal, discount, total} = data;
 	const paymentLabel = paymentMethodLabel(payload.paymentMethod);
@@ -72,12 +89,13 @@ const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
 	const locationCity = location ? escapeHtml(location.city) : "";
 	const pickupHours = getPickupHours(payload.pickupLocation, payload.pickupDate);
 	const formattedDate = formatGermanDate(payload.pickupDate);
+	const cancelUrl = escapeHtml(cancellationUrl(orderNumber));
 
 	const itemRows = payload.items
 		.map((item) => {
 			const imageCell = item.imageUrl
 				? `<td style="padding:12px 8px 12px 0;border-bottom:1px solid #f0f0f0;width:48px;vertical-align:middle;">
-					<img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.name)}" width="44" height="44" style="border-radius:8px;object-fit:cover;display:block;" />
+					<img src="${escapeHtml(emailThumbnail(item.imageUrl))}" alt="${escapeHtml(item.name)}" width="44" height="44" style="border-radius:8px;object-fit:cover;display:block;" />
 				</td>`
 				: `<td style="padding:12px 8px 12px 0;border-bottom:1px solid #f0f0f0;width:48px;vertical-align:middle;">
 					<div style="width:44px;height:44px;border-radius:8px;background:#f0f0f0;"></div>
@@ -120,7 +138,7 @@ const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
 	<!-- ======== HEADER ======== -->
 	<tr>
 		<td style="background:linear-gradient(160deg, #1a6b35 0%, #28a745 50%, #5ec576 100%);padding:32px 24px 28px;text-align:center;">
-			<img src="https://nazaris-feinkost.web.app/logo.png" alt="Nazari's Feinkost" width="64" height="64" style="border-radius:50%;display:inline-block;margin-bottom:12px;background:#fff;" />
+			<img src="${siteUrl}/logo.png" alt="Nazari's Feinkost" width="64" height="64" style="border-radius:50%;display:inline-block;margin-bottom:12px;background:#fff;" />
 			<h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:bold;letter-spacing:0.5px;">Nazari's Feinkost</h1>
 			<p style="margin:6px 0 20px;color:#b8e6c8;font-size:14px;letter-spacing:0.5px;">Bestellbest&auml;tigung</p>
 			<table cellpadding="0" cellspacing="0" style="margin:0 auto;">
@@ -239,18 +257,25 @@ const buildOrderConfirmationHtml = (data: OrderConfirmationData): string => {
 	<!-- ======== FOOTER ======== -->
 	<tr>
 		<td style="padding:24px 36px 32px;text-align:center;border-top:1px solid #e5e7eb;">
-			<p style="margin:0 0 20px;font-size:14px;color:#777;">
+			<p style="margin:0 0 6px;font-size:14px;color:#777;">
 				Bei Fragen antworten Sie einfach auf diese E-Mail.
 			</p>
+			<p style="margin:0 0 18px;font-size:13px;color:#999;line-height:1.5;">
+				Sie k&ouml;nnen Ihre Bestellung bis zum Abholtag kostenfrei stornieren.
+			</p>
 			<!--[if mso]>
-			<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" style="height:40px;v-text-anchor:middle;width:220px;" arcsize="50%" stroke="t" strokecolor="#28a745" fillcolor="#ffffff">
-			<v:stroke dashstyle="solid" color="#28a745" weight="2pt" />
-			<center style="color:#28a745;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">&#128424; Best&auml;tigung drucken</center>
+			<v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" href="${cancelUrl}" style="height:40px;v-text-anchor:middle;width:240px;" arcsize="50%" stroke="t" strokecolor="#d32f2f" fillcolor="#ffffff">
+			<v:stroke dashstyle="solid" color="#d32f2f" weight="2pt" />
+			<center style="color:#d32f2f;font-family:Arial,sans-serif;font-size:14px;font-weight:bold;">Bestellung stornieren</center>
 			</v:roundrect>
 			<![endif]-->
 			<!--[if !mso]><!-->
-			<a href="#" style="display:inline-block;padding:10px 28px;border:2px solid #28a745;border-radius:24px;color:#28a745;text-decoration:none;font-size:14px;font-weight:600;">&#128424; Best&auml;tigung drucken</a>
+			<a href="${cancelUrl}" style="display:inline-block;padding:10px 28px;border:2px solid #d32f2f;border-radius:24px;color:#d32f2f;text-decoration:none;font-size:14px;font-weight:600;">&#10006; Bestellung stornieren</a>
 			<!--<![endif]-->
+			<p style="margin:14px 0 0;font-size:11px;color:#bbb;line-height:1.5;">
+				Falls der Button nicht funktioniert:<br/>
+				<a href="${cancelUrl}" style="color:#aaa;text-decoration:underline;">${cancelUrl}</a>
+			</p>
 			<p style="margin:20px 0 0;font-size:12px;color:#bbb;">&copy; ${new Date().getFullYear()} Nazari's Feinkost</p>
 		</td>
 	</tr>

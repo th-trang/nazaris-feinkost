@@ -18,6 +18,12 @@ export interface CsvRow {
   Saisonal: string;
   "Verfügbarkeitszeitraum": string;
   Mindesthaltbarkeit: string;
+  // Written by exportToCSV so a restore round-trips faithfully. Absent from the
+  // hand-maintained Produktelist.csv, hence optional — see the defaults below.
+  Aktiv?: string;
+  Textur?: string;
+  "NameÜbersetzungen"?: string; // JSON: {"en": "...", "vi": "..."}
+  "BeschreibungÜbersetzungen"?: string; // JSON, same shape
 }
 
 // ─── Firestore document shape ─────────────────────────────────────────────────
@@ -54,6 +60,8 @@ export interface ProductDocument {
   filters: ProductFilters;
   discount: null;
   createdAt: FieldValue;
+  nameTranslations?: Record<string, string>;
+  descriptionTranslations?: Record<string, string>;
 }
 
 // ─── CSV → Firestore mapping ──────────────────────────────────────────────────
@@ -62,6 +70,11 @@ export function csvRowToProduct(row: CsvRow, categoryId: string): ProductDocumen
   const price = parsePrice(row.Preis);
   const allergenGroups = parseAllergenGroups(row.Allergien);
   const {availableFrom, availableTo} = mapAvailability(row.Saisonal, row["Verfügbarkeitszeitraum"]);
+  const nameTranslations = parseTranslations(row["NameÜbersetzungen"], row.Produktname);
+  const descriptionTranslations = parseTranslations(
+    row["BeschreibungÜbersetzungen"],
+    row.Produktname,
+  );
 
   return {
     name: row.Produktname.trim(),
@@ -74,7 +87,7 @@ export function csvRowToProduct(row: CsvRow, categoryId: string): ProductDocumen
     mhd: mapMhd(row.Mindesthaltbarkeit),
     availableFrom,
     availableTo,
-    active: true,
+    active: parseActive(row.Aktiv),
     ingredients: mapIngredients(row.Zutaten ?? "", allergenGroups),
     filters: {
       dietType: mapDietType(row.Ernährungsform),
@@ -82,10 +95,13 @@ export function csvRowToProduct(row: CsvRow, categoryId: string): ProductDocumen
       spiceLevel: mapSpiceLevel(row.Scharf),
       containsNuts: allergenGroups.includes("nuts"),
       containsGluten: allergenGroups.includes("gluten"),
-      texture: "creamy",
+      texture: mapTexture(row.Textur),
     },
     discount: null,
     createdAt: FieldValue.serverTimestamp(),
+    // Omit the keys entirely when absent — Firestore rejects undefined values.
+    ...(nameTranslations ? {nameTranslations} : {}),
+    ...(descriptionTranslations ? {descriptionTranslations} : {}),
   };
 }
 
@@ -104,6 +120,7 @@ export function productToCsvRow(
     Produktname: doc.name,
     Kategorie: doc.categoryName,
     Beschreibung: doc.description,
+    Bilder: doc.imageUrl ?? "",
     Zutaten: doc.ingredients.map((i) => i.name).join(";"),
     Allergien: buildAllergenString(doc.ingredients, doc.filters),
     Scharf: reverseSpiceLevel(doc.filters.spiceLevel),
@@ -115,6 +132,10 @@ export function productToCsvRow(
     "Verfügbarkeitszeitraum":
       seasonal ? `${doc.availableFrom} bis ${doc.availableTo}` : "",
     Mindesthaltbarkeit: mhdStr,
+    Aktiv: doc.active ? "Ja" : "Nein",
+    Textur: doc.filters.texture,
+    "NameÜbersetzungen": serialiseTranslations(doc.nameTranslations),
+    "BeschreibungÜbersetzungen": serialiseTranslations(doc.descriptionTranslations),
   };
 }
 
@@ -131,6 +152,54 @@ function parsePrice(raw: string | undefined | null): number {  if (!raw || !raw.
   const n = parseFloat(normalised);
   if (isNaN(n)) throw new Error(`Invalid price: "${raw}"`);
   return n;
+}
+
+// Absent column (hand-maintained CSV) means "visible" — matches the old hardcoded true.
+function parseActive(raw: string | undefined | null): boolean {
+  if (!raw || !raw.trim()) return true;
+  const v = raw.trim().toLowerCase();
+  return !(v === "nein" || v === "no" || v === "false" || v === "0");
+}
+
+function mapTexture(raw: string | undefined | null): "liquid" | "creamy" | "chunky" {
+  const v = (raw ?? "").trim().toLowerCase();
+  if (v === "liquid" || v === "flüssig" || v === "fluessig") return "liquid";
+  if (v === "chunky" || v === "stückig" || v === "stueckig") return "chunky";
+  return "creamy";
+}
+
+/**
+ * Translations live on the product doc as {locale: text} and are read by
+ * ProductCard. They are stored in the CSV as a single JSON cell so a restore
+ * does not silently drop them. Malformed JSON degrades to "no translations"
+ * rather than failing the whole row.
+ */
+function parseTranslations(
+  raw: string | undefined | null,
+  productName: string,
+): Record<string, string> | undefined {
+  if (!raw || !raw.trim()) return undefined;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    console.warn(`[mappers] "${productName}": malformed translations JSON — ignored.`);
+    return undefined;
+  }
+  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+    console.warn(`[mappers] "${productName}": translations must be an object — ignored.`);
+    return undefined;
+  }
+  const out: Record<string, string> = {};
+  for (const [locale, text] of Object.entries(parsed as Record<string, unknown>)) {
+    if (typeof text === "string" && text.trim()) out[locale] = text;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+function serialiseTranslations(value: Record<string, string> | undefined): string {
+  if (!value || Object.keys(value).length === 0) return "";
+  return JSON.stringify(value);
 }
 
 function parseAllergenGroups(raw: string): string[] {
