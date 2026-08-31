@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -58,6 +58,13 @@ export default function WiderrufPage() {
   const [wasRefunded, setWasRefunded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+
+  // The confirmation e-mail links here with ?order=NAZ-001. Read it from
+  // location instead of useSearchParams so the page needs no Suspense boundary.
+  useEffect(() => {
+    const fromLink = new URLSearchParams(window.location.search).get("order");
+    if (fromLink) setOrderNumber(fromLink.toUpperCase());
+  }, []);
 
   const callWiderruf = httpsCallable<WiderrufPayload, OrderInfo & CancelResult>(
     getFirebaseFunctions(),
