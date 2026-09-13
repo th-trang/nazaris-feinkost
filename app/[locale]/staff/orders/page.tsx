@@ -1,23 +1,53 @@
 "use client";
 
-import {useCallback, useEffect, useMemo, useState} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import {useParams, useRouter} from "next/navigation";
-import { ClipboardList, Lock, LoaderCircle, RefreshCw, Users, CheckCircle, Plus } from "lucide-react";
-import {useTranslations} from "next-intl";
-import {watchAuthUser, isStaffUser, isAdminUser} from "@/app/lib/firebase/auth";
-import {signOut} from "firebase/auth";
-import {getFirebaseAuth} from "@/app/lib/firebase/client";
-import {getStaffOrders, markOrderCompleted, getStaffUsers} from "@/app/lib/firebase/orders";
-import {StaffOrder, StaffUser, CreateStaffUserInput} from "@/app/lib/orders/types";
-import {locations} from "@/app/data/LocationList";
-import UsersTable from "@/app/components/UserTable";
-import CreateStaffModal from "@/app/components/CreateStaffModal";
+import { useParams, useRouter } from "next/navigation";
+import { ClipboardList, Lock, LoaderCircle, RefreshCw, Users, CheckCircle, Plus, Receipt } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { watchAuthUser, isStaffUser, isAdminUser } from "@/app/lib/firebase/auth";
+import { signOut } from "firebase/auth";
+import { getFirebaseAuth } from "@/app/lib/firebase/client";
+import { getStaffOrders, markOrderCompleted, getStaffUsers } from "@/app/lib/firebase/orders";
+import { toLocalIsoDate } from "@/app/lib/helper/Utils";
+import { StaffOrder, StaffUser, CreateStaffUserInput } from "@/app/lib/orders/types";
+import { locations } from "@/app/data/LocationList";
 import OrderDetailModal from "@/app/components/OrderDetailModal";
 import OrderCard from "@/app/components/OrderCard";
 
 type AccessState = "checking" | "unauthenticated" | "forbidden" | "authorized";
 type Tab = "orders" | "users";
+
+const ORDER_DATE_PRESETS = ["today", "last7", "last30", "thisMonth"] as const;
+type OrderDatePreset = (typeof ORDER_DATE_PRESETS)[number];
+
+const resolveOrderDatePreset = (
+  preset: OrderDatePreset,
+  today = new Date(),
+): { from: string; to: string } => {
+  const to = toLocalIsoDate(today);
+
+  switch (preset) {
+    case "today":
+      return { from: to, to };
+    case "last7": {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 6);
+      return { from: toLocalIsoDate(start), to };
+    }
+    case "last30": {
+      const start = new Date(today);
+      start.setDate(start.getDate() - 29);
+      return { from: toLocalIsoDate(start), to };
+    }
+    case "thisMonth":
+    default:
+      return {
+        from: toLocalIsoDate(new Date(today.getFullYear(), today.getMonth(), 1)),
+        to,
+      };
+  }
+};
 
 export default function StaffOrdersPage() {
   const t = useTranslations("staffOrders");
@@ -40,6 +70,9 @@ export default function StaffOrdersPage() {
   const [selectedOrder, setSelectedOrder] = useState<StaffOrder | null>(null);
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string>("all");
+  // Empty means unbounded on that side, so the default view is still "all orders".
+  const [orderedFrom, setOrderedFrom] = useState("");
+  const [orderedTo, setOrderedTo] = useState("");
 
   const canLoadOrders = useMemo(() => accessState === "authorized", [accessState]);
 
@@ -60,7 +93,10 @@ export default function StaffOrdersPage() {
     setError(null);
 
     try {
-      const result = await getStaffOrders();
+      const result = await getStaffOrders({
+        from: orderedFrom || undefined,
+        to: orderedTo || undefined,
+      });
       setUncompleted(result.uncompleted);
       setCompleted(result.completed);
     } catch {
@@ -68,11 +104,11 @@ export default function StaffOrdersPage() {
     } finally {
       setIsLoadingOrders(false);
     }
-  }, [canLoadOrders, t]);
+  }, [canLoadOrders, orderedFrom, orderedTo, t]);
 
   const loadUsers = useCallback(async () => {
     if (!canLoadOrders || !isAdmin) return;
-    
+
 
     setIsLoadingUsers(true);
     setError(null);
@@ -102,42 +138,6 @@ export default function StaffOrdersPage() {
     }
   };
 
-  // const handleUpdateUser = async (uid: string, updates: {displayName?: string; email?: string; isAdmin?: boolean}) => {
-  //   try {
-  //     await updateStaffUser({
-  //       uid,
-  //       displayName: updates.displayName,
-  //       email: updates.email,
-  //       isAdmin: updates.isAdmin,
-  //     });
-  //     await loadUsers();
-  //   } catch {
-  //     setError(t("updateUserError"));
-  //   }
-  // };
-
-  // const handleCreateUser = async (input: CreateStaffUserInput) => {
-  //   await createStaffUser(input);
-  //   await loadUsers();
-  // };
-
-  // const handleDeleteUser = async (uid: string, email: string) => {
-  //   try {
-  //     await deleteStaffUser(uid);
-  //     await loadUsers();
-  //   } catch {
-  //     setError(t("deleteUserError"));
-  //   }
-  // };
-
-  // const handleResetPassword = async (uid: string) => {
-  //   try {
-  //     await resetStaffUserPassword(uid);
-  //   } catch {
-  //     setError(t("resetPasswordError"));
-  //   }
-  // };
-
   const handleLogout = async () => {
     try {
       setIsSigningOut(true);
@@ -165,7 +165,7 @@ export default function StaffOrdersPage() {
         try {
           const staff = await isStaffUser(user);
           if (!mounted) return;
-          
+
           if (!staff) {
             setAccessState("forbidden");
             return;
@@ -175,7 +175,7 @@ export default function StaffOrdersPage() {
           if (!mounted) {
             return;
           }
-          
+
           setIsAdmin(admin);
           setCurrentUserUid(user.uid);
           setAccessState("authorized");
@@ -265,6 +265,7 @@ export default function StaffOrdersPage() {
           </div>
 
           <div className="flex items-center gap-2">
+
             <button
               onClick={() => {
                 if (activeTab === "orders") {
@@ -296,28 +297,23 @@ export default function StaffOrdersPage() {
         <div className="flex gap-2 mb-6">
           <button
             onClick={() => setActiveTab("orders")}
-            className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-              activeTab === "orders"
+            className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${activeTab === "orders"
                 ? "bg-green-600 text-white shadow-lg"
                 : "bg-white/80 text-gray-700 border border-gray-200 hover:bg-white"
-            }`}
+              }`}
           >
             <ClipboardList className="w-5 h-5" />
             {t("ordersTab")}
           </button>
 
           {isAdmin && (
-            <button
-              onClick={() => setActiveTab("users")}
-              className={`inline-flex items-center gap-2 px-5 py-3 rounded-xl font-medium transition-all ${
-                activeTab === "users"
-                  ? "bg-green-600 text-white shadow-lg"
-                  : "bg-white/80 text-gray-700 border border-gray-200 hover:bg-white"
-              }`}
+            <Link
+              href={`/${locale}/staff/accounting`}
+              className="inline-flex items-center gap-2 px-4 py-3 bg-white/80 rounded-xl border border-gray-200 text-gray-700 hover:bg-white"
             >
-              <Users className="w-5 h-5" />
-              {t("usersTab")}
-            </button>
+              <Receipt className="w-4 h-4" />
+              <span>{t("accountingLink")}</span>
+            </Link>
           )}
         </div>
 
@@ -337,24 +333,89 @@ export default function StaffOrdersPage() {
               </div>
             )}
 
-            {/* Location Filter */}
-            <div className="mb-6 flex items-center gap-3">
-              <label htmlFor="location-filter" className="text-sm font-medium text-gray-700">
-                {t("filterByLocation")}
-              </label>
-              <select
-                id="location-filter"
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
-              >
-                <option value="all">{t("allLocations")}</option>
-                {locations.map((location) => (
-                  <option key={location.name} value={location.name}>
-                    {location.name}
-                  </option>
-                ))}
-              </select>
+            {/* Filters */}
+            <div className="mb-6 bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-lg border border-gray-100">
+              <div className="flex flex-wrap items-end gap-4">
+                <label htmlFor="location-filter" className="text-sm text-gray-700">
+                  <span className="block mb-1 font-medium">{t("filterByLocation")}</span>
+                  <select
+                    id="location-filter"
+                    value={selectedLocation}
+                    onChange={(e) => setSelectedLocation(e.target.value)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                  >
+                    <option value="all">{t("allLocations")}</option>
+                    {locations.map((location) => (
+                      <option key={location.name} value={location.name}>
+                        {location.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label htmlFor="ordered-from" className="text-sm text-gray-700">
+                  <span className="block mb-1 font-medium">{t("orderedFrom")}</span>
+                  <input
+                    id="ordered-from"
+                    type="date"
+                    value={orderedFrom}
+                    max={orderedTo || undefined}
+                    onChange={(e) => setOrderedFrom(e.target.value)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                  />
+                </label>
+
+                <label htmlFor="ordered-to" className="text-sm text-gray-700">
+                  <span className="block mb-1 font-medium">{t("orderedTo")}</span>
+                  <input
+                    id="ordered-to"
+                    type="date"
+                    value={orderedTo}
+                    min={orderedFrom || undefined}
+                    onChange={(e) => setOrderedTo(e.target.value)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-transparent"
+                  />
+                </label>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mt-4">
+                {ORDER_DATE_PRESETS.map((preset) => {
+                  const presetRange = resolveOrderDatePreset(preset);
+                  const isActive =
+                    presetRange.from === orderedFrom && presetRange.to === orderedTo;
+
+                  return (
+                    <button
+                      key={preset}
+                      onClick={() => {
+                        setOrderedFrom(presetRange.from);
+                        setOrderedTo(presetRange.to);
+                      }}
+                      className={`px-4 py-2 rounded-xl text-sm transition-all ${
+                        isActive
+                          ? "bg-green-600 text-white shadow"
+                          : "bg-white text-gray-700 border border-gray-200 hover:border-green-300"
+                      }`}
+                    >
+                      {t(`orderDatePresets.${preset}`)}
+                    </button>
+                  );
+                })}
+
+                <button
+                  onClick={() => {
+                    setOrderedFrom("");
+                    setOrderedTo("");
+                  }}
+                  className={`px-4 py-2 rounded-xl text-sm transition-all ${
+                    !orderedFrom && !orderedTo
+                      ? "bg-green-600 text-white shadow"
+                      : "bg-white text-gray-700 border border-gray-200 hover:border-green-300"
+                  }`}
+                >
+                  {t("allOrderDates")}
+                </button>
+              </div>
             </div>
 
             <div className="grid lg:grid-cols-2 gap-8">

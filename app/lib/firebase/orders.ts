@@ -1,8 +1,11 @@
 import {httpsCallable} from "firebase/functions";
 import {sendPasswordResetEmail} from "firebase/auth";
-import { collection, doc, getDocs, limit, orderBy, query, updateDoc, where } from "firebase/firestore";
+import { collection, doc, getDocs, limit, orderBy, query, QueryConstraint, Timestamp, updateDoc, where } from "firebase/firestore";
 import {getFirebaseAuth, getFirebaseDb, getFirebaseFunctions, isFirebaseConfigured} from "./client";
 import {
+  AccountingOrder,
+  AccountingRange,
+  AccountingResult,
   CreateOrderInput,
   CreateOrderResponse,
   CreateStaffUserInput,
@@ -12,6 +15,7 @@ import {
   StaffOrdersResult,
   StaffUser,
   StaffUsersResult,
+  SETTLED_PAYMENT_STATUSES,
   UpdateStaffUserInput,
 } from "../orders/types";
 
@@ -98,16 +102,59 @@ const toStaffOrder = (id: string, data: Record<string, unknown>): StaffOrder => 
   };
 };
 
-export const getStaffOrders = async (): Promise<StaffOrdersResult> => {
+/**
+ * An inclusive range over the day an order was placed. Either end may be left
+ * open, so "everything since March" needs no artificial upper bound.
+ */
+export interface StaffOrderDateRange {
+  from?: string;
+  to?: string;
+}
+
+/**
+ * Turns a `YYYY-MM-DD` day into Firestore bounds.
+ *
+ * Both ends are built from *local* midnight rather than by slicing the stored
+ * UTC string: an order placed at 00:30 in Hamburg is 22:30 UTC the day before,
+ * and staff looking for "orders placed on the 5th" mean the shop's day.
+ */
+const toDayBounds = (range: StaffOrderDateRange): QueryConstraint[] => {
+  const constraints: QueryConstraint[] = [];
+
+  if (range.from) {
+    constraints.push(
+      where("createdAt", ">=", Timestamp.fromDate(new Date(`${range.from}T00:00:00`))),
+    );
+  }
+
+  if (range.to) {
+    constraints.push(
+      where("createdAt", "<=", Timestamp.fromDate(new Date(`${range.to}T23:59:59.999`))),
+    );
+  }
+
+  return constraints;
+};
+
+export const getStaffOrders = async (
+  range: StaffOrderDateRange = {},
+): Promise<StaffOrdersResult> => {
   if (!isFirebaseConfigured) {
     throw new Error("Firebase is not configured in this environment.");
   }
 
   const ordersRef = collection(getFirebaseDb(), "orders");
 
+  // The range sits on `createdAt`, which is already the orderBy field, so it
+  // rides the existing isComplete/createdAt index — no new index needed. It
+  // also has to be applied here rather than in the page: filtering after the
+  // fetch would only ever search the newest 200 orders.
+  const withinRange = toDayBounds(range);
+
   const uncompletedQuery = query(
     ordersRef,
     where("isComplete", "==", false),
+    ...withinRange,
     orderBy("createdAt", "desc"),
     limit(200),
   );
@@ -115,6 +162,7 @@ export const getStaffOrders = async (): Promise<StaffOrdersResult> => {
   const completedQuery = query(
     ordersRef,
     where("isComplete", "==", true),
+    ...withinRange,
     orderBy("createdAt", "desc"),
     limit(200),
   );
@@ -131,6 +179,86 @@ export const getStaffOrders = async (): Promise<StaffOrdersResult> => {
     completed: completedSnapshot.docs.map((d) =>
       toStaffOrder(d.id, d.data() as Record<string, unknown>),
     ),
+  };
+};
+
+/**
+ * How many orders a single report may load.
+ *
+ * A bookkeeping report has to be complete or it is worthless, so rather than
+ * silently paging we load up to this many and tell the caller when the range
+ * held more — at which point the answer is a narrower range, not a truncated
+ * report.
+ */
+const ACCOUNTING_LIMIT = 2000;
+
+const toDate = (value: unknown): Date | undefined =>
+  (value as {toDate?: () => Date} | undefined)?.toDate?.();
+
+const toAccountingOrder = (
+  id: string,
+  data: Record<string, unknown>,
+): AccountingOrder => {
+  const base = toStaffOrder(id, data);
+  const payment = (data.payment ?? {}) as Record<string, unknown>;
+  const paidAt = toDate(data.paidAt);
+  const canceledAt = toDate(data.canceledAt);
+  const amountReceived = payment.amountReceived;
+
+  return {
+    ...base,
+    paidAt: paidAt ? paidAt.toISOString() : undefined,
+    // A refund is what takes an order back out of the revenue, so a charge
+    // that was reversed counts even if the status field was never updated.
+    refunded:
+      payment.refundStatus === "refunded" ||
+      Boolean(payment.refundId) ||
+      base.status === "canceled",
+    refundId: payment.refundId ? String(payment.refundId) : undefined,
+    canceledAt: canceledAt ? canceledAt.toISOString() : undefined,
+    amountReceived:
+      amountReceived === undefined || amountReceived === null
+        ? undefined
+        : Number(amountReceived),
+  };
+};
+
+/**
+ * Every order in the range whose payment actually settled — the raw material
+ * of the bookkeeping report.
+ *
+ * The range is applied to `createdAt` because that is the field every order
+ * carries and the one Firestore can index; the report then files each order
+ * under its payment date, which sits seconds later.
+ */
+export const getAccountingOrders = async (
+  range: AccountingRange,
+): Promise<AccountingResult> => {
+  if (!isFirebaseConfigured) {
+    throw new Error("Firebase is not configured in this environment.");
+  }
+
+  const from = Timestamp.fromDate(new Date(`${range.from}T00:00:00`));
+  const to = Timestamp.fromDate(new Date(`${range.to}T23:59:59.999`));
+
+  const settledQuery = query(
+    collection(getFirebaseDb(), "orders"),
+    where("payment.status", "in", [...SETTLED_PAYMENT_STATUSES]),
+    where("createdAt", ">=", from),
+    where("createdAt", "<=", to),
+    orderBy("createdAt", "asc"),
+    // One over the cap, so a full page is distinguishable from an exact fit.
+    limit(ACCOUNTING_LIMIT + 1),
+  );
+
+  const snapshot = await getDocs(settledQuery);
+  const truncated = snapshot.docs.length > ACCOUNTING_LIMIT;
+
+  return {
+    orders: snapshot.docs
+      .slice(0, ACCOUNTING_LIMIT)
+      .map((d) => toAccountingOrder(d.id, d.data() as Record<string, unknown>)),
+    truncated,
   };
 };
 

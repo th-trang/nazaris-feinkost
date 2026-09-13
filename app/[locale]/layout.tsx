@@ -21,16 +21,21 @@ export default async function LocaleLayout({
         <NextIntlClientProvider messages={messages} locale={locale}>
             <CartProvider>
                 <div className="flex flex-col min-h-screen">
-                    <PromoBanner />
-                    <Header />
+                    <div className="print:hidden">
+                        <PromoBanner />
+                        <div aria-hidden className="h-12" />
+                        <Header />
+                    </div>
                     <ClientLayout params={{ locale }}>
                         <main className="flex-1">
                             {children}
                         </main>
                     </ClientLayout>
-                    <CookieBanner />
-                    <Footer />
-                    <CartSidebar />
+                    <div className="print:hidden">
+                        <CookieBanner />
+                        <Footer />
+                        <CartSidebar />
+                    </div>
                 </div>
             </CartProvider>
         </NextIntlClientProvider>

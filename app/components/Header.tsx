@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, usePathname, useRouter } from 'next/navigation';
 import logo from '@/public/logo.png';
 import { useCart } from "@/app/context/CartContext";
+import { watchAuthUser, isStaffUser } from "@/app/lib/firebase/auth";
 import { useTranslations } from 'next-intl';
 
 export default function Header() {
@@ -17,6 +18,21 @@ export default function Header() {
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] =
         useState(false);
+    const [isStaff, setIsStaff] = useState(false);
+
+    useEffect(() => {
+        let cancelled = false;
+        const unsubscribe = watchAuthUser((user) => {
+            void isStaffUser(user).then((staff) => {
+                if (!cancelled) setIsStaff(staff);
+            });
+        });
+
+        return () => {
+            cancelled = true;
+            unsubscribe();
+        };
+    }, []);
 
     const navItems = [
         { label: t('home'), path: "/home" },
@@ -24,7 +40,7 @@ export default function Header() {
         { label: t('products'), path: "/products" },
         { label: t('catering'), path: "/catering" },
         { label: t('locations'), path: "/standorte" },
-        { label: t('staff'), path: "/staff/login" },
+        ...(isStaff ? [{ label: t('staff'), path: "/staff/orders" }] : []),
     ];
 
     const locale = typeof params?.locale === 'string' ? params.locale : 'en';

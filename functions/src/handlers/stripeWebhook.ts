@@ -160,6 +160,12 @@ export const stripeWebhook = onRequest(
 			// costs. createOrder already binds the intent to this order at the
 			// catalog total, so a shortfall here means something is wrong.
 			if (paymentStatus === "paid") {
+				// The date the money arrived is what a bookkeeping report files the
+				// order under, and it must not move if Stripe replays the event.
+				if (!orderDoc.data()?.paidAt) {
+					updateData["paidAt"] = new Date();
+				}
+
 				const orderTotals = (orderDoc.data()?.totals ?? {}) as Record<string, unknown>;
 				const expected = Number(orderTotals.total ?? orderTotals.subtotal);
 

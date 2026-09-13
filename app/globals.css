@@ -203,3 +203,40 @@ body {
     line-height: 1.5;
   }
 }
+
+/**
+ * Print rules.
+ *
+ * Only the staff revenue report is meant to be printed; everything else on the
+ * page opts out with Tailwind's `print:hidden`. These rules handle what a
+ * utility class cannot: the paper itself, and the backdrop the app paints
+ * behind every screen.
+ */
+@page {
+  size: A4 portrait;
+  margin: 14mm;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+
+  /* Backdrop blur and shadows turn into grey smears on paper. */
+  * {
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+
+  /* Repeat the column headers on every page of a long order list. */
+  thead {
+    display: table-header-group;
+  }
+
+  tr,
+  img {
+    break-inside: avoid;
+  }
+}

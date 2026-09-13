@@ -47,3 +47,21 @@ export function isSepaAllowedForPickupDate(pickupDateStr: string): boolean {
 
   return businessDays >= 5;
 }
+/**
+ * The calendar day a timestamp falls on, in the viewer's timezone, as
+ * `YYYY-MM-DD`.
+ *
+ * Order timestamps are stored as UTC ISO strings, so slicing the first ten
+ * characters would file a 00:30 Hamburg order under the previous day. Going
+ * through the local getters keeps "placed on the 5th" meaning the shop's day.
+ */
+export const toLocalIsoDate = (value: string | Date): string => {
+  const date = typeof value === "string" ? new Date(value) : value;
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+};

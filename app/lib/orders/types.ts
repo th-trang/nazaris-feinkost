@@ -157,3 +157,32 @@ export interface UpdateStaffUserInput {
   isAdmin?: boolean;
   isStaff?: boolean;
 }
+
+export const SETTLED_PAYMENT_STATUSES = ["paid", "underpaid"] as const;
+
+export interface AccountingOrder extends StaffOrder {
+  paidAt?: string;
+  refunded: boolean;
+  refundId?: string;
+  canceledAt?: string;
+  amountReceived?: number;
+}
+export interface AccountingRange {
+  from: string;
+  to: string;
+}
+
+export interface AccountingResult {
+  orders: AccountingOrder[];
+  truncated: boolean;
+}
+
+export interface AccountingSummary {
+  orderCount: number;
+  refundedCount: number;
+  paidTotal: number;
+  refundedTotal: number;
+  revenue: number;
+  discountTotal: number;
+  currency: string;
+}

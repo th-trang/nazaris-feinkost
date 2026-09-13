@@ -10,7 +10,7 @@ Zucchini Ratatouille,Antipasti & Gemüse,,https://res.cloudinary.com/f2pmybmx/im
 Libanesischer Tabouleh,Salate,,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651415/Taboule%CC%81.png,,Nein,ohne Knoblauch,Vegan,100 Gramm,"3,8",Nein,,2 Tage
 Pepaco Creme,Frischkäse-Cremes,"exotisch, süß-scharf",https://res.cloudinary.com/f2pmybmx/image/upload/v1786651588/Pepaco.png,,leicht Scharf,ohne Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
 Basilikum Creme,Frischkäse-Cremes,"würzig, aromatisch",https://res.cloudinary.com/f2pmybmx/image/upload/v1786651579/Basilikum_Creme.png,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
-Feige-Rosmarin Creme,Frischkäse-Cremes,"leicht süß, aromatisch",,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
+Feige-Rosmarin Creme,Frischkäse-Cremes,"leicht süß, aromatisch",https://res.cloudinary.com/f2pmybmx/image/upload/v1788118189/34201bea-a258-4bc7-a926-c8229f7a0060.png,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
 Cranberry-Chili Creme,Frischkäse-Cremes,süß-scharf,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651580/Cranberry_Dip.png,,leicht Scharf,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
 Dattel-Kokos Creme,Frischkäse-Cremes,"exotisch, fein süß",https://res.cloudinary.com/f2pmybmx/image/upload/v1786651582/Dattel.png,,Nein,ohne Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
 Mediterrane Olive Creme,Frischkäse-Cremes,würzig,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651586/Mediterrane_Olive.png,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
@@ -32,10 +32,10 @@ Orientalisches Minzpesto,Pesto,"aromatisch, vielseitig. Ein Genuss zu Hummus, K�
 Spinat-Börek-Rolle,Rolle,,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651552/Spinat_Bo%CC%88rek.png,,Nein,ohne Knoblauch,Vegan,Stück,2,Nein,,
 Kraut-Rolle,Rolle,mit Schafskäse,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651549/Krautrolle.png,,Nein,ohne Knoblauch,Vegan,Stück,"3,8",Nein,,
 Schafskäse-Börek-Rolle,Rolle,,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651552/Schafska%CC%88se_Bo%CC%88rek.png,,Nein,ohne Knoblauch,Milchprodukt,Stück,2,Nein,,
-Ratatouille-Rolle,Rolle,"Gemüse, leicht scharf",,,leicht Scharf,ohne Knoblauch,Vegan,Stück,"3,8",Nein,,
+Ratatouille-Rolle,Rolle,"Gemüse, leicht scharf",https://res.cloudinary.com/f2pmybmx/image/upload/v1788118188/416e5c58-615f-49c6-8bdf-e9413e8f7d58.png,,leicht Scharf,ohne Knoblauch,Vegan,Stück,"3,8",Nein,,
 Hummus-Falafel-Rolle,Rolle,,"https://res.cloudinary.com/f2pmybmx/image/upload/v1786651548/Hummus_Falafel_Rolle.png, https://res.cloudinary.com/f2pmybmx/image/upload/v1786651547/Brett_Hummus___Falafel_Rolle.png",,Nein,mit Knoblauch,Vegan,Stück,"3,8",Nein,,
 Falafel,Rolle,hausgemacht,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651473/Falafel.png,,Nein,ohne Knoblauch,Vegan,Stück,"1,7",Nein,,
-Melansane-Rolle,Rolle,mit Schafskäse,"https://res.cloudinary.com/f2pmybmx/image/upload/v1786651551/Melanzane_Rolle.png, https://res.cloudinary.com/f2pmybmx/image/upload/v1786651548/Brett_Melansane.png",,Scharf,mit Knoblauch,Vegetarisch,Stück,"3,8",Nein,,
+Melansane-Rolle,Rolle,mit Schafskäse,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651548/Brett_Melansane.png,,Scharf,mit Knoblauch,Vegetarisch,Stück,"3,8",Nein,,
 Linsen-Rolle,Rolle,"mit Linsen, Houmous",https://res.cloudinary.com/f2pmybmx/image/upload/v1786651550/Linsenrolle.png,,Nein,ohne Knoblauch,Vegan,Stück,"3,8",Nein,,
 Griechische Kalamata-Oliven,Oliven,"mit Estragon, ohne Kern, handgepflückt",https://res.cloudinary.com/f2pmybmx/image/upload/v1786651438/Griechische_Kalamata_Oliven.png,,Nein,ohne Knoblauch,Vegan,100 Gramm,"3,9",Nein,,5 Tage
 Gefüllte Peperoni,Antipasti & Gemüse,mit Käse,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651369/eingelegte_Peperoni.png,,leicht Scharf,ohne Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,
@@ -55,7 +55,7 @@ Griechisches Schafskäse (Natur),Käse,"cremig nature, Fett i. Tr. 43%, unter Mi
 Griechischer Schafskäse,Käse,"mit Kräutermarinade, Fett i. Tr. 43%",https://res.cloudinary.com/f2pmybmx/image/upload/v1786651528/Schafska%CC%88se_Krauter_Marinade.png,,Nein,ohne Knoblauch,Milchprodukt,100 Gramm,"3,8",Nein,,5 Tage
 Ananas-Curry Creme,Frischkäse-Cremes,"mit Minze, würzig",,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Ja,Sommer,3 Tage
 Pomodori Creme,Frischkäse-Cremes,"Mediterran-Style, aromatisch, leicht würzig",https://res.cloudinary.com/f2pmybmx/image/upload/v1786651590/Pomodori_Dip.png,,Nein,Hauch Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,3 Tage
-Tzatziki Creme,Frischkäse-Cremes,,,,Nein,mit Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,
+Tzatziki Creme,Frischkäse-Cremes,,https://res.cloudinary.com/f2pmybmx/image/upload/v1788118189/b5392d8c-39e0-4bff-b47f-543da2e0522a.png,,Nein,mit Knoblauch,Milchprodukt,100 Gramm,"4,8",Nein,,
 Grüne griechische Oliven,Oliven,mit Knoblauch und Petersilie,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651436/Griechische_Oliven_Knobi.png,,Nein,mit Knoblauch,Vegan,100 Gramm,"3,9",Nein,,
 Schwarze griechische Oliven,Oliven,mit Knoblauch und Petersilie,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651438/Gefu%CC%88llte_Oliven_Mandel.png,,Nein,mit Knoblauch,Vegan,100 Gramm,"3,9",Nein,,
 Spanische Zitronenoliven,Oliven,,https://res.cloudinary.com/f2pmybmx/image/upload/v1786651437/Spanische_Oliven.png,,Nein,ohne Knoblauch,Vegan,100 Gramm,"3,9",Nein,,
